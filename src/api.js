@@ -1,6 +1,5 @@
 import PDFEdit from "./editor";
 import Logger from "./logger";
-const JSZip = require("jszip");
 const vscode = require("vscode");
 
 class DataTypeEnum {
@@ -51,17 +50,34 @@ class PdfFileDataProvider {
           resolve(_data);
           break;
         case DataTypeEnum.UINT8ARRAY:
-          var z = new JSZip();
-          z.file("filename.pdf", _data);
-          z.files["filename.pdf"].async("base64").then(
-            function (f) {
-              resolve(f);
-            },
-            function (err) {
-              reject(err);
-              console.error("HINT from PDF Viewer API: There was an error converting the pdf file data from a Uint8Array to a base64 string using JSZip.");
+          try {
+            // Web-compatible way to convert Uint8Array to base64
+            let base64;
+            if (typeof globalThis !== 'undefined' && typeof globalThis.btoa === 'function') {
+              let binary = '';
+              const len = _data.byteLength;
+              for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(_data[i]);
+              }
+              base64 = globalThis.btoa(binary);
+            } else if (typeof Window !== 'undefined' && typeof Window.prototype.btoa === 'function') {
+              // Fallback for some older browser envs if globalThis is missing
+              let binary = '';
+              const len = _data.byteLength;
+              for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(_data[i]);
+              }
+              base64 = window.btoa(binary);
+            } else if (typeof Buffer !== 'undefined') {
+              base64 = Buffer.from(_data).toString('base64');
+            } else {
+              throw new Error("Environment does not support Base64 conversion (no btoa or Buffer)");
             }
-          );
+            resolve(base64);
+          } catch (err) {
+            reject(err);
+            console.error("HINT from PDF Viewer API: Error converting Uint8Array to Base64 in this environment: " + err.message);
+          }
           break;
 
         default:
@@ -71,6 +87,7 @@ class PdfFileDataProvider {
     });
   }
 }
+
 
 export default class PdfViewerApi {
   static PdfFileDataProvider = PdfFileDataProvider;

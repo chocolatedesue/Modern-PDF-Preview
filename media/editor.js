@@ -32,10 +32,7 @@ function getTheme() {
 // Watch for theme changes
 const observer = new MutationObserver(() => {
   if (viewer) {
-    viewer.config = {
-      ...viewer.config,
-      theme: getTheme()
-    };
+    viewer.setTheme(getTheme());
   }
 });
 observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
@@ -100,13 +97,41 @@ async function previewPdf(pdfUri, base64Data, wasmUri, workerUri) {
         theme: getTheme(),
       });
     } else {
-      // Update the existing viewer with the new source and other configs
-      viewer.config = {
-        ...viewer.config,
-        src: source,
-        wasmUrl: wasmUri,
-        theme: getTheme(),
-      };
+      // Correctly use the DocumentManagerPlugin to open the new document
+      // We assume EmbedPDF exports the plugin class or we can access it via the namespace
+      try {
+        const registry = await viewer.registry;
+        const DocPlugin = EmbedPDF.DocumentManagerPlugin;
+        if (DocPlugin) {
+          const docManager = registry.getPlugin(DocPlugin);
+          await docManager.openDocumentUrl({ url: source });
+        } else {
+          // Fallback: Re-initialize if we can't access the plugin class
+          // This ensures robustness if the import structure varies
+          const target = document.getElementById('pdf-viewer');
+          target.innerHTML = ''; // Clean up
+          viewer = EmbedPDF.init({
+            type: 'container',
+            target: target,
+            src: source,
+            wasmUrl: wasmUri,
+            worker: true,
+            theme: getTheme(),
+          });
+        }
+      } catch (err) {
+        console.warn("Update failed, attempting re-init", err);
+        const target = document.getElementById('pdf-viewer');
+        target.innerHTML = '';
+        viewer = EmbedPDF.init({
+          type: 'container',
+          target: target,
+          src: source,
+          wasmUrl: wasmUri,
+          worker: true,
+          theme: getTheme(),
+        });
+      }
     }
 
     document.getElementById("loading")?.remove();

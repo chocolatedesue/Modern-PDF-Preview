@@ -1,7 +1,7 @@
 {
-  "name": "modern-pdf-pro",
-  "displayName": "Modern PDF Pro (WASM)",
-  "description": "A high-performance PDF viewer for VS Code powered by WebAssembly. Feature-rich, secure, and fast.",
+  "name": "modern-pdf-preview",
+  "displayName": "Modern PDF Preview (WASM)",
+  "description": "A high-performance PDF previewer for VS Code powered by WebAssembly. Feature-rich, secure, and fast.",
   "publisher": "chocolatedesue",
   "icon": "icon.png",
   "author": {
@@ -16,7 +16,7 @@
   "repository": {
     "url": "https://github.com/chocolatedesue/vscode-pdf"
   },
-  "version": "1.2.6",
+  "version": "1.2.7",
   "browser": "./dist/main.js",
   "main": "./dist/main.js",
   "extensionKind": [
@@ -37,7 +37,7 @@
     "customEditors": [
       {
         "viewType": "modernPdfViewer.PDFEdit",
-        "displayName": "Modern PDF Pro",
+        "displayName": "Modern PDF Preview",
         "selector": [
           {
             "filenamePattern": "*.pdf"
@@ -49,7 +49,8 @@
   },
   "scripts": {
     "build": "webpack",
-    "deploy": "sh scripts/publish.sh"
+    "deploy": "sh scripts/publish.sh",
+    "update-media": "node scripts/update-media.js"
   },
   "devDependencies": {
     "@actions/core": "^1.10.0",
@@ -60,6 +61,6 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "jszip": "^3.10.1"
+    "@embedpdf/snippet": "^2.1.1"
   }
 }

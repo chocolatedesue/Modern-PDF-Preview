@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.7] - 2026-01-09
+
+### Changed
+- **Automation**: Added `npm run update-media` script to automate component updates.
+- **Documentation**: Added "Component Updates" section to Operations manual.
+
+## [1.2.6] - 2026-01-09
+
+### Changed
+- **Branding**: Renamed project to "Modern PDF Preview".
+- **Documentation**: Updated README, API docs, and added Troubleshooting/Operations guides.
+- **Optimization**: Removed `jszip` dependency (-95% bundle size).
+- **Web Compatibility**: Fixed `Buffer` runtime issues in VS Code Web (Worker) environment.
+
+### Fixed
+- **Component Usage**: Corrected API usage for `embed-pdf-viewer` (theme syncing and document loading).
+
 ## [1.2.0] - 2026-01-09
 
 ### Major Changes

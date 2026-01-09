@@ -1,12 +1,19 @@
 import PdfViewerApi from "./api";
 import Logger from "./logger";
-
 const vscode = require("vscode");
+
+const START_PAGE_OPTS = {
+  enableScripts: true,
+  retainContextWhenHidden: true,
+};
 
 /**
  * @implements {import("..").PdfFileDataProvider}
  */
 class PDFDoc {
+  /**
+   * @param {vscode.Uri} uri
+   */
   constructor(uri) {
     this._uri = uri;
   }
@@ -17,110 +24,167 @@ class PDFDoc {
     return this._uri;
   }
 
+  /**
+   * Reads the file data.
+   * @returns {Promise<Uint8Array>}
+   */
   async getFileData() {
-    var uri = this.uri;
-    return new Promise(function (resolve, reject) {
-      vscode.workspace.fs.readFile(uri).then(
-        function (fileData) {
-          return PdfViewerApi.PdfFileDataProvider.fromUint8Array(fileData)
-            .getFileData()
-            .then(function (data) {
-              resolve(data);
-            });
-        },
-        function (err) {
-          reject(err);
-        }
-      );
-    });
+    try {
+      const fileData = await vscode.workspace.fs.readFile(this.uri);
+      const dataProvider = PdfViewerApi.PdfFileDataProvider.fromUint8Array(fileData);
+      return await dataProvider.getFileData();
+    } catch (err) {
+      throw err;
+    }
   }
 }
 
 export default class PDFEdit {
-  static register() {
-    const provider = new PDFEdit();
+  /**
+   * Registers the custom editor provider.
+   * @param {vscode.ExtensionContext} context
+   * @returns {vscode.Disposable}
+   */
+  static register(context) {
+    const provider = new PDFEdit(context);
     return vscode.window.registerCustomEditorProvider(PDFEdit.viewType, provider);
   }
 
   static viewType = "modernPdfViewer.PDFEdit";
 
-  constructor() { }
-
-  async resolveCustomEditor(document, panel, _token) {
-    Logger.log(`Resolving Custom Editor for: ${document.uri.toString()}`);
-    PDFEdit.previewPdfFile(document, panel);
+  /**
+   * @param {vscode.ExtensionContext} context
+   */
+  constructor(context) {
+    this.context = context;
   }
 
+  /**
+   * Called when the custom editor is opened.
+   * @param {vscode.CustomDocument} document
+   * @param {vscode.WebviewPanel} panel
+   * @param {vscode.CancellationToken} _token
+   */
+  async resolveCustomEditor(document, panel, _token) {
+    Logger.log(`Resolving Custom Editor for: ${document.uri.toString()}`);
+    await this.setupWebview(document, panel);
+  }
+
+  /**
+   * Opens the custom document.
+   * @param {vscode.Uri} uri
+   * @param {vscode.CustomDocumentOpenContext} _context
+   * @param {vscode.CancellationToken} _token
+   * @returns {Promise<PDFDoc>}
+   */
   async openCustomDocument(uri, _context, _token) {
     Logger.log(`Opening Custom Document: ${uri.toString()}`);
     return new PDFDoc(uri);
   }
 
   /**
-   *
-   * @param {import("..").PdfFileDataProvider} dataProvider The object containing the pdf file data.
-   * @param {vscode.WebviewPanel} panel The webview panel object to use.
+   * Sets up the webview content and message handling.
+   * @param {PDFDoc} dataProvider
+   * @param {vscode.WebviewPanel} panel
    */
-  static previewPdfFile(dataProvider, panel) {
-    const extUri = vscode.extensions.getExtension("chocolatedesue.modern-pdf-pro").extensionUri;
-    panel.webview.options = {
-      enableScripts: true,
-    };
-    panel.webview.html = `<!DOCTYPE html>
-<html>
+  async setupWebview(dataProvider, panel) {
+    const extUri = this.context.extensionUri;
+    const mediaUri = vscode.Uri.joinPath(extUri, "media");
 
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${panel.webview.cspSource} blob: data:; script-src ${panel.webview.cspSource} 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob:; style-src ${panel.webview.cspSource} 'unsafe-inline'; worker-src ${panel.webview.cspSource} blob: 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'; connect-src ${panel.webview.cspSource} blob: data:; font-src ${panel.webview.cspSource};">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script type="module" src="${panel.webview.asWebviewUri(vscode.Uri.joinPath(extUri, "media", "editor.js"))}"></script>
-  <link rel="stylesheet" href="${panel.webview.asWebviewUri(vscode.Uri.joinPath(extUri, "media", "editor.css"))}">
-</head>
+    panel.webview.options = START_PAGE_OPTS;
 
-<body>
+    try {
+      // Load HTML template
+      const htmlPath = vscode.Uri.joinPath(extUri, "src", "webview.html");
+      const htmlContent = new TextDecoder("utf-8").decode(await vscode.workspace.fs.readFile(htmlPath));
 
-  <div id="loading">
-    <h1>Your PDF is loading...</h1>
-    <p>If you see this screen for more than a few seconds, close this editor tab and reopen the file.</p>
-  </div>
-  <div id="error" style="display: none; color: var(--vscode-errorForeground); padding: 20px;">
-    <h1>Error Loading PDF</h1>
-    <pre id="error-message"></pre>
-  </div>
-  <div id="pdf-viewer" style="width: 100vw; height: 100vh;"></div>
+      // Resolve resources
+      const editorJsUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, "editor.js"));
+      const editorCssUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, "editor.css"));
+      const wasmUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, "pdfium.wasm"));
 
-</body>
+      // Dynamic Worker Resolution
+      const workerFilename = await this.findWorkerFilename(mediaUri);
+      const workerUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, workerFilename));
 
-</html>`;
-    const msg = {
-      command: "preview",
-      wasmUri: panel.webview.asWebviewUri(vscode.Uri.joinPath(extUri, "media", "pdfium.wasm")).toString(true),
-      workerUri: panel.webview.asWebviewUri(vscode.Uri.joinPath(extUri, "media", "worker-engine-BwJuk6Jt.js")).toString(true)
-    };
+      // Inject variables into HTML
+      panel.webview.html = htmlContent
+        .replace(/{{CSP_SOURCE}}/g, panel.webview.cspSource)
+        .replace(/{{EDITOR_JS_URI}}/g, editorJsUri.toString())
+        .replace(/{{EDITOR_CSS_URI}}/g, editorCssUri.toString());
 
-    panel.webview.onDidReceiveMessage(async (message) => {
-      if (message.command === 'ready') {
-        const isWeb = vscode.env.uiKind === vscode.UIKind.Web;
-        Logger.log(`[Webview Ready] Environment: ${isWeb ? "Web" : "Desktop"} (UIKind: ${vscode.env.uiKind})`);
+      // Prepare init message
+      const msg = {
+        command: "preview",
+        wasmUri: wasmUri.toString(true),
+        workerUri: workerUri.toString(true)
+      };
 
-        if (dataProvider.uri && !isWeb) {
-          Logger.log("Strategy: URI Mode (Standard)");
-          msg.pdfUri = panel.webview.asWebviewUri(dataProvider.uri).toString(true);
-          panel.webview.postMessage(msg);
-        } else {
-          Logger.log("Strategy: Data Injection Mode (Web/Fallback)");
-          dataProvider.getFileData().then(function (data) {
-            msg.data = data;
-            panel.webview.postMessage(msg);
-          }).catch(function (err) {
-            Logger.log(`Error loading file data: ${err}`);
-            panel.webview.postMessage({
-              command: 'error',
-              error: err.message || String(err)
-            });
-          });
+      // Message Handling
+      panel.webview.onDidReceiveMessage(async (message) => {
+        if (message.command === 'ready') {
+          await this.handleWebviewReady(dataProvider, panel, msg);
         }
+      });
+
+    } catch (e) {
+      Logger.log(`Error setting up webview: ${e}`);
+      panel.webview.html = `<h1>Error loading viewer</h1><p>${e.message}</p>`;
+    }
+  }
+
+  /**
+   * Handles the 'ready' message from the webview.
+   * @param {PDFDoc} dataProvider 
+   * @param {vscode.WebviewPanel} panel 
+   * @param {Object} initMsg 
+   */
+  async handleWebviewReady(dataProvider, panel, initMsg) {
+    const isWeb = vscode.env.uiKind === vscode.UIKind.Web;
+    Logger.log(`[Webview Ready] Environment: ${isWeb ? "Web" : "Desktop"} (UIKind: ${vscode.env.uiKind})`);
+
+    if (dataProvider.uri && !isWeb) {
+      Logger.log("Strategy: URI Mode (Standard)");
+      initMsg.pdfUri = panel.webview.asWebviewUri(dataProvider.uri).toString(true);
+      panel.webview.postMessage(initMsg);
+    } else {
+      Logger.log("Strategy: Data Injection Mode (Web/Fallback)");
+      try {
+        const data = await dataProvider.getFileData();
+        initMsg.data = data;
+        panel.webview.postMessage(initMsg);
+      } catch (err) {
+        Logger.log(`Error loading file data: ${err}`);
+        panel.webview.postMessage({
+          command: 'error',
+          error: err.message || String(err)
+        });
       }
-    });
+    }
+  }
+
+  /**
+   * Finds the worker file in the media directory dynamically.
+   * @param {vscode.Uri} mediaUri 
+   * @returns {Promise<string>}
+   */
+  async findWorkerFilename(mediaUri) {
+    try {
+      const children = await vscode.workspace.fs.readDirectory(mediaUri);
+      // Look for worker-engine-*.js or worker-engine.js
+      const workerFile = children.find(([name, type]) =>
+        name.startsWith("worker-engine") && name.endsWith(".js")
+      );
+
+      if (workerFile) {
+        return workerFile[0];
+      }
+
+      Logger.log("Worker file not found, defaulting to 'worker-engine.js'");
+      return "worker-engine.js";
+    } catch (e) {
+      Logger.log(`Error listing media folder: ${e} - Defaulting to 'worker-engine.js'`);
+      return "worker-engine.js";
+    }
   }
 }

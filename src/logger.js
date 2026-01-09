@@ -5,7 +5,7 @@ class Logger {
 
     static get channel() {
         if (!this._channel) {
-            this._channel = vscode.window.createOutputChannel("Modern PDF Pro");
+            this._channel = vscode.window.createOutputChannel("Modern PDF Preview");
         }
         return this._channel;
     }

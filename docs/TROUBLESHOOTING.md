@@ -1,4 +1,4 @@
-# Modern PDF Pro (WASM) - 记录与故障排除 (Troubleshooting)
+# Modern PDF Preview (WASM) - 记录与故障排除 (Troubleshooting)
 
 本文档记录了项目从旧版 `pdf.js` 迁移到现代 `embed-pdf-viewer` (WASM) 过程中遇到的核心挑战及其解决方案，特别针对 **VS Code Web (vscode.dev)** 环境的适配。
 
@@ -56,4 +56,30 @@
 
 ---
 
-> **项目状态**：目前 `Modern PDF Pro (WASM)` 已完美支持桌面版与 Web 版，具备工业级的稳定性和安全性。
+> **项目状态**：目前 `Modern PDF Preview (WASM)` 已完美支持桌面版与 Web 版，具备工业级的稳定性和安全性。
+
+---
+
+## 5. 2026 技术重构记录 (Refactoring Logs)
+
+### 问题：`Buffer is not defined` (Web Extension Environment)
+- **现象**：在 VS Code Web (Worker) 环境运行时，控制台报错 `Buffer is not defined`。
+- **原因**：`src/api.js` 使用了 Node.js 原生 `Buffer` 进行 Base64 转换，而 Web Worker 环境下没有该 Polyfill。
+- **解决方案**：
+  - 改用同构 (Isomorphic) 写法：
+  - 优先检测 `globalThis.btoa` (Web Worker 标准)。
+  - 降级检测 `window.btoa` (老旧浏览器)。
+  - 最后回退到 `Buffer.from` (Node environment)。
+
+### 问题：冗余依赖 `jszip`
+- **现象**：`src/api.js` 仅仅为了将 `Uint8Array` 转为 Base64 而引入了整个 `jszip` 库。
+- **原因**：历史代码遗留，导致插件体积膨胀 (~100KB)。
+- **解决方案**：移除 `jszip`，使用上述的原生 Base64 转换方案。插件体积缩减至 ~4KB。
+
+### 问题：`embed-pdf-viewer` API 误用
+- **现象**：前端 `media/editor.js` 尝试通过直接修改 `viewer.config` 属性来切换主题或文档。
+- **原因**：未能遵循组件文档，`config` 属性通常只用于初始化，不支持响应式更新。
+- **解决方案**：
+  - 切换主题：使用 `viewer.setTheme()`。
+  - 切换文档：使用 `DocumentManagerPlugin.openDocumentUrl()`。
+  - **健壮性**：增加了 Fallback 机制，若无法访问插件类，则回退到销毁并重建 Viewer 实例。

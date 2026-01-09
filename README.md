@@ -1,12 +1,12 @@
-# Modern PDF Pro (WASM)
+# Modern PDF Preview (WASM)
 
 <!-- markdownlint-disable MD033 -->
 
 <div align="center">
 
-[![Visual Studio Marketplace Last Updated](https://img.shields.io/visual-studio-marketplace/last-updated/chocolatedesue.modern-pdf-pro?color=darkblue&logo=visual%20studio%20code&logoColor=007acc)][vsc-marketplace]
-[![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/chocolatedesue.modern-pdf-pro?color=darkblue&logo=visual%20studio%20code&logoColor=007acc)][vsc-marketplace]
-[![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/chocolatedesue.modern-pdf-pro?color=darkblue&label=Install%20Count&logo=visual%20studio%20code&logoColor=007acc)][vsc-marketplace]
+[![Visual Studio Marketplace Last Updated](https://img.shields.io/visual-studio-marketplace/last-updated/chocolatedesue.modern-pdf-preview?color=darkblue&logo=visual%20studio%20code&logoColor=007acc)][vsc-marketplace]
+[![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/chocolatedesue.modern-pdf-preview?color=darkblue&logo=visual%20studio%20code&logoColor=007acc)][vsc-marketplace]
+[![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/chocolatedesue.modern-pdf-preview?color=darkblue&label=Install%20Count&logo=visual%20studio%20code&logoColor=007acc)][vsc-marketplace]
 
 
 [![GitHub issues](https://img.shields.io/github/issues/chocolatedesue/vscode-pdf)](https://github.com/chocolatedesue/vscode-pdf/issues)
@@ -15,55 +15,58 @@
 
 </div>
 
-**Modern PDF Pro** is a high-performance, privacy-focused PDF viewer for Visual Studio Code. It uses a modern WebAssembly (WASM) engine to render PDFs with speed and accuracy, supporting both Desktop and Web environments (GitHub Codespaces, vscode.dev).
+**Modern PDF Preview** is a next-generation PDF viewer for VS Code, designed for speed, accuracy, and productivity. 
 
-## 🚀 Key Features
+It is built on top of **[PDFium WASM](https://github.com/bblanchon/pdfium-binaries)** and wrapped with **[embed-pdf-viewer](https://github.com/embedpdf/embed-pdf-viewer)**, delivering a Chrome-grade rendering experience directly inside your editor.
 
-- **High Performance**: Powered by a custom WASM build of Google's PDFium engine. fast, efficient, and lightweight.
-- **Web Ready**: Fully supported in **VS Code for Web** and **GitHub Codespaces**. We use intelligent data injection to bypass common browser CORS/permission issues.
-- **Theme Sync**: Automatically adapts to your VS Code theme (Dark, Light, High Contrast).
-- **Privacy First**: All rendering happens locally in your browser/webview. No data is sent to external servers.
-- **Rich Tools**: Search, thumbnails, page navigation, and zoom.
+## ✨ Key Features
+
+### 🚀 High Performance
+Powered by **WebAssembly (WASM)**, this extension renders large PDFs instantly without slowing down VS Code. Smooth scrolling and zooming come standard.
+
+### 🖊️ Annotation Support
+Review and mark up documents directly.
+- **Highlight** important text.
+- **Draw** ink signatures or diagrams.
+- **Add Notes** and comments.
+
+### 🌐 Universal Support
+Works everywhere you use VS Code.
+- **Desktop**: Windows, macOS, Linux.
+- **Web**: VS Code for Web (vscode.dev), GitHub Codespaces.
+- **Privacy-First**: All rendering happens locally. Your data never leaves your machine (or browser sandbox).
+
+### 🎨 Seamless Integration
+- **Theme Sync**: Automatically adapts to Light, Dark, and High Contrast themes.
+- **Rich Toolbar**: Thumbnails, Outline/Bookmarks, Search, Print, and Presentation Mode.
 
 ## 📦 Installation & Search
 
-You can find the extension in the Marketplace or OpenVSX Registry.
-
 ### 🔍 Search
-Search for **"Modern PDF Pro"** in the VS Code Extensions panel.
+Search for **"Modern PDF Preview"** in the VS Code Extensions panel.
 
 ### 🆔 Extension ID
-Use the ID for direct installation:
-`chocolatedesue.modern-pdf-pro`
+`chocolatedesue.modern-pdf-preview`
 
 ### 🌐 Direct Links
-- [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=chocolatedesue.modern-pdf-pro)
-- [Open VSX Registry](https://open-vsx.org/extension/chocolatedesue/modern-pdf-pro)
+- [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=chocolatedesue.modern-pdf-preview)
+- [Open VSX Registry](https://open-vsx.org/extension/chocolatedesue/modern-pdf-preview)
 
-## 🛠 Technical Architecture
+## 📚 Documentation
 
-This extension differentiates itself from legacy viewers by using a modern stack:
+- **[Technical Architecture](docs/ARCHITECTURE.md)**: Learn how we use WASM and Web Workers.
+- **[API Reference](docs/API.md)**: Integrate PDF previewing into your own extension.
+- **[Troubleshooting](docs/TROUBLESHOOTING.md)**: Solutions for common issues.
 
-1.  **Rendering Engine**: Uses `pdfium.wasm` (via `embed-pdf-viewer`), a compiled WebAssembly version of the industry-standard PDFium library. This ensures consistent rendering matching Google Chrome.
-2.  **Web Workers**: Rendering tasks are offloaded to a Web Worker (`worker-engine.js`), keeping the VS Code UI thread responsive even with large documents.
-3.  **Hybrid Loading Strategy**:
-    - **Desktop**: Uses standard `vscode-resource:` URIs for efficient native file access.
-    - **Web**: Uses a "Data Injection" fallback. The extension host reads the file into memory and streams it to the webview as a Blob URL, solving 401 Unauthorized errors common in browser-based VS Code.
-
-## 📚 API for Developers
-
-Other extensions can use Modern PDF Pro to preview PDFs.
-
-```javascript
-const extension = vscode.extensions.getExtension('chocolatedesue.modern-pdf-pro');
-const api = await extension.activate();
-// See docs/API.md for full usage
-```
-Refer to [`docs/API.md`](docs/API.md) for full documentation.
-
-## Credits
+## Credits & Disclaimer
 
 This project is a modern evolution of the [vscode-pdf-viewer](https://github.com/AdamRaichu/vscode-pdf-viewer) project.
 
-[vsc-marketplace]: https://marketplace.visualstudio.com/items?itemName=chocolatedesue.modern-pdf-pro
+It leverages the **[embed-pdf-viewer](https://github.com/embedpdf/embed-pdf-viewer)** component for robust and high-performance PDF rendering via WebAssembly.
+
+> **Note**: I am **NOT** the maintainer of `pdfium` or `embed-pdf-viewer`. This extension is a wrapper that integrates these excellent technologies into VS Code. 
+>
+> If you encounter rendering bugs or specific PDF feature issues, please check the upstream repositories. I cannot fix core rendering engine bugs.
+
+[vsc-marketplace]: https://marketplace.visualstudio.com/items?itemName=chocolatedesue.modern-pdf-preview
 

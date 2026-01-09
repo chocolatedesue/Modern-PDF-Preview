@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src {{CSP_SOURCE}} blob: data:; script-src {{CSP_SOURCE}} 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob:; style-src {{CSP_SOURCE}} 'unsafe-inline'; worker-src {{CSP_SOURCE}} blob: 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'; connect-src {{CSP_SOURCE}} blob: data:; font-src {{CSP_SOURCE}};">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script type="module" src="{{EDITOR_JS_URI}}"></script>
+  <link rel="stylesheet" href="{{EDITOR_CSS_URI}}">
+</head>
+
+<body>
+
+  <div id="loading">
+    <h1>Your PDF is loading...</h1>
+    <p>If you see this screen for more than a few seconds, close this editor tab and reopen the file.</p>
+  </div>
+  <div id="error" style="display: none; color: var(--vscode-errorForeground); padding: 20px;">
+    <h1>Error Loading PDF</h1>
+    <pre id="error-message"></pre>
+  </div>
+  <div id="pdf-viewer" style="width: 100vw; height: 100vh;"></div>
+
+</body>
+
+</html>

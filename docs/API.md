@@ -1,13 +1,13 @@
 # API Reference
 
-Modern PDF Pro (WASM) exports an API that other extension authors can use to open PDF previews within VS Code.
+Modern PDF Preview (WASM) exports an API that other extension authors can use to open PDF previews within VS Code.
 
 ## Usage
 
 To use the API, you must first obtain it from the extension.
 
 ```javascript
-const pdfViewer = vscode.extensions.getExtension('chocolatedesue.modern-pdf-pro');
+const pdfViewer = vscode.extensions.getExtension('chocolatedesue.modern-pdf-preview');
 const api = await pdfViewer.activate();
 const pdfApi = api.getV1Api();
 ```
@@ -39,7 +39,7 @@ A holder for PDF file data.
 import * as vscode from 'vscode';
 
 export async function activate(context) {
-    const pdfViewer = vscode.extensions.getExtension('chocolatedesue.modern-pdf-pro');
+    const pdfViewer = vscode.extensions.getExtension('chocolatedesue.modern-pdf-preview');
     const api = await pdfViewer.activate();
     const pdfApi = api.getV1Api();
 
