@@ -1,4 +1,5 @@
 import PdfViewerApi from "./api";
+import Logger from "./logger";
 
 const vscode = require("vscode");
 
@@ -46,10 +47,12 @@ export default class PDFEdit {
   constructor() { }
 
   async resolveCustomEditor(document, panel, _token) {
+    Logger.log(`Resolving Custom Editor for: ${document.uri.toString()}`);
     PDFEdit.previewPdfFile(document, panel);
   }
 
   async openCustomDocument(uri, _context, _token) {
+    Logger.log(`Opening Custom Document: ${uri.toString()}`);
     return new PDFDoc(uri);
   }
 
@@ -95,10 +98,15 @@ export default class PDFEdit {
       workerUri: panel.webview.asWebviewUri(vscode.Uri.joinPath(extUri, "media", "worker-engine-BwJuk6Jt.js")).toString(true)
     };
 
-    if (dataProvider.uri) {
+    const isWeb = vscode.env.uiKind === vscode.UIKind.Web;
+    Logger.log(`Environment: ${isWeb ? "Web" : "Desktop"} (UIKind: ${vscode.env.uiKind})`);
+
+    if (dataProvider.uri && !isWeb) {
+      Logger.log("Strategy: URI Mode (Standard)");
       msg.pdfUri = panel.webview.asWebviewUri(dataProvider.uri).toString(true);
       panel.webview.postMessage(msg);
     } else {
+      Logger.log("Strategy: Data Injection Mode (Web/Fallback)");
       dataProvider.getFileData().then(function (data) {
         msg.data = data;
         panel.webview.postMessage(msg);

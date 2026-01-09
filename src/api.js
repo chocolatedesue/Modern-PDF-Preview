@@ -1,4 +1,5 @@
 import PDFEdit from "./editor";
+import Logger from "./logger";
 const JSZip = require("jszip");
 const vscode = require("vscode");
 
@@ -79,6 +80,7 @@ export default class PdfViewerApi {
    * @param {PdfFileDataProvider} provider A holder for the file data.
    */
   static previewPdfFile(provider) {
+    Logger.log(`API: Creating preview for: ${provider.name}`);
     const panel = vscode.window.createWebviewPanel("modernPdfViewer.apiCreatedPreview", provider.name);
     PDFEdit.previewPdfFile(provider, panel);
   }
