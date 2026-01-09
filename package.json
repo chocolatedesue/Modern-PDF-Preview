@@ -3,7 +3,7 @@
   "displayName": "Modern PDF Pro (WASM)",
   "description": "A high-performance PDF viewer for VS Code powered by WebAssembly. Feature-rich, secure, and fast.",
   "publisher": "chocolatedesue",
-  "icon": "pdf-flat.png",
+  "icon": "icon.png",
   "author": {
     "name": "chocolatedesue"
   },
