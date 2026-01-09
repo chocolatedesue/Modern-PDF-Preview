@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
  
+## [1.4.4] - 2026-01-09
+ 
+### Fixed
+- **Rendering**: Fixed issue where PDF content wouldn't render on initial load due to incorrect configuration mapping.
+- **Config**: Added support for percentage zoom levels (e.g., 100%) and corrected zoom mode mapping strings.
+ 
 ## [1.4.3] - 2026-01-09
  
 ### Fixed

@@ -7,12 +7,12 @@ const vscode = require('vscode');
 export function getPdfConfiguration() {
     const config = vscode.workspace.getConfiguration('modernPdfViewer');
 
-    // Map VS Code enum values to @embedpdf/svelte-pdf-viewer values
+    // Map VS Code enum values to @embedpdf/snippet values
     const zoomMap = {
-        'page-width': 'page-width',
-        'page-fit': 'page-fit',
-        'page-height': 'page-height',
-        'auto': 'auto'
+        'page-width': 'fit-width',
+        'page-fit': 'fit-page',
+        'page-height': 'fit-page', // fit-height is not supported by default, fallback to fit-page
+        'auto': 'automatic'
     };
 
     const spreadMap = {
@@ -21,11 +21,21 @@ export function getPdfConfiguration() {
         'even': 'even'
     };
 
-    const zoomLevel = config.get('defaultZoomLevel', 'page-width');
+    let zoomLevel = config.get('defaultZoomLevel', 'page-width');
     const spreadMode = config.get('defaultSpreadMode', 'none');
 
+    // Handle percentage strings (e.g., "100%")
+    if (typeof zoomLevel === 'string' && zoomLevel.endsWith('%')) {
+        const percent = parseFloat(zoomLevel);
+        if (!isNaN(percent)) {
+            zoomLevel = percent / 100;
+        }
+    } else {
+        zoomLevel = zoomMap[zoomLevel] || zoomLevel;
+    }
+
     return {
-        zoomLevel: zoomMap[zoomLevel] || zoomLevel,
+        zoomLevel: zoomLevel,
         spreadMode: spreadMap[spreadMode] || spreadMode
     };
 }

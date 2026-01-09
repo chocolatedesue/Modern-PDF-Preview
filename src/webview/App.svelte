@@ -78,6 +78,10 @@
         currentDocumentUri = newDocUri;
         wasmUrl = message.wasmUri;
         messageConfig = message.config;
+        console.log(
+          "[Webview] Received config:",
+          JSON.stringify(messageConfig),
+        );
 
         // Use Blob URL for data injection mode
         let src = message.pdfUri;
