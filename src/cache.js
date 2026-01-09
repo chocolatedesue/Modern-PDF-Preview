@@ -82,13 +82,17 @@ class PDFCacheManager {
      * @returns {Object} Cache stats
      */
     getStats() {
-        const entries = Array.from(this.cache.values());
-        const totalSize = entries.reduce((sum, entry) => sum + entry.size, 0);
+        let totalSize = 0;
+        const entryKeys = [];
+        for (const [key, entry] of this.cache.entries()) {
+            totalSize += entry.size;
+            entryKeys.push(key);
+        }
         return {
             count: this.cache.size,
             maxSize: this.maxSize,
             totalSize,
-            entries: Array.from(this.cache.keys())
+            entries: entryKeys
         };
     }
 }

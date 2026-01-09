@@ -40,6 +40,6 @@ export function getPdfConfiguration() {
         zoomLevel: zoomLevel,
         spreadMode: spreadMap[spreadMode] || spreadMode,
         tabBar: tabBar,
-        initialDocuments: []
+        initialDocuments: [],
     };
 }

@@ -116,31 +116,32 @@ export default class PDFEdit {
    */
   static async forceSave(context) {
     // Find the active panel's URI
-    // Since we don't have a direct map from active panel to URI easily exposed without iteration,
-    // we iterate through activeEditors.
-
     let activeEntry = null;
+    let activeUri = null;
+
     for (const [uri, entry] of activeEditors.entries()) {
       if (entry.panel.active) {
-        activeEntry = { uri: vscode.Uri.parse(uri), ...entry };
+        activeUri = vscode.Uri.parse(uri);
+        activeEntry = entry;
         break;
       }
     }
 
-    if (!activeEntry) {
+    if (!activeEntry || !activeUri) {
       Logger.log('[Force Save] No active PDF editor found');
       return;
     }
 
-    Logger.log(`[Force Save] Triggering save for ${activeEntry.uri.toString()}`);
+    Logger.log(`[Force Save] Triggering save for ${activeUri.toString()}`);
 
-    // Reuse the save logic
-    // We create a dummy cancellation token source since this is a command
+    // Create a dummy cancellation token source since this is a command
     const tokenSource = new vscode.CancellationTokenSource();
-    const provider = new PDFEdit(context); // Instance just for calling methods, though methods could be static or associated with entry
+
+    // Use an instance to call the private #performSave
+    const provider = new PDFEdit(context);
 
     try {
-      await provider.#performSave(activeEntry.uri, activeEntry.panel, tokenSource.token);
+      await provider.#performSave(activeUri, activeEntry.panel, tokenSource.token);
       vscode.window.showInformationMessage("PDF Saved Successfully");
     } catch (e) {
       vscode.window.showErrorMessage(`Failed to save PDF: ${e.message}`);
@@ -304,12 +305,14 @@ export default class PDFEdit {
    * @param {vscode.CancellationToken} _token
    */
   async resolveCustomEditor(document, panel, _token) {
-    Logger.log(`Resolving Custom Editor for: ${document.uri.toString()}`);
+    const uriString = document.uri.toString();
+    Logger.log(`Resolving Custom Editor for: ${uriString}`);
 
     // Register editor instance
-    activeEditors.set(document.uri.toString(), {
+    activeEditors.set(uriString, {
       panel,
-      resolveSave: null
+      resolveSave: null,
+      messageDisposable: null // Will be set in setupWebview
     });
 
     // Check if webview is already set up (to prevent reinitialization on tab switch)
@@ -335,7 +338,7 @@ export default class PDFEdit {
 
   /**
    * Sets up the webview content and message handling.
-   * @param {PDFDoc} dataProvider
+   * @param {PDFDoc|import("./api").PdfFileDataProvider} dataProvider
    * @param {vscode.WebviewPanel} panel
    */
   async setupWebview(dataProvider, panel) {
@@ -343,13 +346,16 @@ export default class PDFEdit {
     const extUri = this.context.extensionUri;
     const mediaUri = vscode.Uri.joinPath(extUri, "media");
 
+    const uri = dataProvider.uri || (typeof dataProvider.getRawData === 'function' ? vscode.Uri.parse(`pdf-api:///${encodeURIComponent(dataProvider.name)}`) : null);
+    const uriString = uri ? uri.toString() : 'unknown-uri';
+
     const isWeb = vscode.env.uiKind === vscode.UIKind.Web;
     let localResourceRoots = [mediaUri];
 
-    if (!isWeb) {
+    if (!isWeb && uri && uri.scheme !== 'pdf-api') {
       try {
         const path = require('path');
-        const pdfDir = vscode.Uri.file(path.dirname(dataProvider.uri.fsPath));
+        const pdfDir = vscode.Uri.file(path.dirname(uri.fsPath));
         localResourceRoots.push(pdfDir);
       } catch (e) {
         Logger.log(`[Warning] Could not resolve PDF directory for localResourceRoots: ${e}`);
@@ -360,7 +366,7 @@ export default class PDFEdit {
       ...WEBVIEW_OPTIONS,
       localResourceRoots: localResourceRoots
     };
-    Logger.log(`[Performance] Webview setup started for ${dataProvider.uri.toString()}`);
+    Logger.log(`[Performance] Webview setup started for ${uriString}`);
 
     try {
       // Load HTML template
@@ -386,7 +392,13 @@ export default class PDFEdit {
         config: config
       };
 
-      // Message Handling - Store the disposable for cleanup
+      // Ensure old message listeners are cleaned up if re-initializing
+      const existingEntry = activeEditors.get(uriString);
+      if (existingEntry && existingEntry.messageDisposable) {
+        existingEntry.messageDisposable.dispose();
+      }
+
+      // Message Handling
       const messageDisposable = panel.webview.onDidReceiveMessage(async (message) => {
         if (message.command === 'ready') {
           await this.handleWebviewReady(dataProvider, panel, msg);
@@ -405,33 +417,28 @@ export default class PDFEdit {
         } else if (message.command === 'save-direct') {
           // Unsolicited save from webview (e.g. Ctrl+S)
           const rawData = message.data;
-          if (rawData) {
-            Logger.log(`[Direct Save] Writing ${rawData.length} bytes to ${dataProvider.uri.fsPath}`);
+          if (rawData && uri && uri.scheme !== 'pdf-api') {
+            Logger.log(`[Direct Save] Writing ${rawData.length} bytes to ${uri.fsPath}`);
             // Write file directly
             try {
               const buffer = new Uint8Array(rawData);
-              await vscode.workspace.fs.writeFile(dataProvider.uri, buffer);
+              await vscode.workspace.fs.writeFile(uri, buffer);
 
               // Update cache
-              cacheManager.set(dataProvider.uri, buffer, buffer.byteLength);
-
-              // Clear dirty state if it's a CustomDocument
-              if (typeof dataProvider.uri === 'object') {
-                // In VS Code Custom Editor API, we need to signal that the document is saved
-                // to clear the dirty bit in the UI.
-                // Since this is a "direct save", we should ideally use the workspace save API,
-                // but if we write directly, we can't easily clear the bit without a standard save call.
-                // However, we can fire an event or let the user know.
-              }
+              cacheManager.set(uri, buffer, buffer.byteLength);
 
               Logger.log('[Direct Save] File overwritten successfully');
             } catch (e) {
               Logger.log(`[Direct Save] Failed to write file: ${e}`);
+              panel.webview.postMessage({
+                command: 'error',
+                error: `Failed to save file: ${e.message}`
+              });
             }
           }
         } else if (message.command === 'save-response') {
           // Handle save response
-          const editorEntry = activeEditors.get(dataProvider.uri.toString());
+          const editorEntry = activeEditors.get(uriString);
           if (editorEntry && editorEntry.resolveSave) {
             const rawData = message.data;
             if (rawData) {
@@ -444,11 +451,21 @@ export default class PDFEdit {
         }
       });
 
+      // Update entry with new disposable and current panel
+      activeEditors.set(uriString, {
+        panel,
+        resolveSave: existingEntry ? existingEntry.resolveSave : null,
+        messageDisposable
+      });
+
       // Cleanup when panel is disposed
       panel.onDidDispose(() => {
-        messageDisposable.dispose();
-        activeEditors.delete(dataProvider.uri.toString());
-        Logger.log(`Webview panel disposed for ${dataProvider.uri.toString()}`);
+        const entry = activeEditors.get(uriString);
+        if (entry && entry.messageDisposable) {
+          entry.messageDisposable.dispose();
+        }
+        activeEditors.delete(uriString);
+        Logger.log(`Webview panel disposed for ${uriString}`);
       });
 
       const duration = Date.now() - startTime;
@@ -579,10 +596,14 @@ export default class PDFEdit {
     const isWeb = vscode.env.uiKind === vscode.UIKind.Web;
     Logger.log(`[Webview Ready] Environment: ${isWeb ? "Web" : "Desktop"} (UIKind: ${vscode.env.uiKind})`);
 
+    // Create a new message object to avoid mutating the original initMsg
+    // which is captured in the closure of the message handler
+    const msg = { ...initMsg };
+
     if (dataProvider.uri && !isWeb) {
       Logger.log("Strategy: URI Mode (Standard)");
-      initMsg.pdfUri = panel.webview.asWebviewUri(dataProvider.uri).toString(true);
-      panel.webview.postMessage(initMsg);
+      msg.pdfUri = panel.webview.asWebviewUri(dataProvider.uri).toString(true);
+      panel.webview.postMessage(msg);
     } else {
       Logger.log("Strategy: Data Injection Mode (Web/Fallback)");
       try {
@@ -595,16 +616,12 @@ export default class PDFEdit {
           data = await dataProvider.getFileData();
         }
 
-        initMsg.data = data;
+        msg.data = data;
 
-        // Use transferables if data is ArrayBuffer or has one
-        if (data instanceof Uint8Array) {
-          panel.webview.postMessage(initMsg, [data.buffer]);
-        } else if (data instanceof ArrayBuffer) {
-          panel.webview.postMessage(initMsg, [data]);
-        } else {
-          panel.webview.postMessage(initMsg);
-        }
+        // Note: We DO NOT use transferables here because 'data' might be coming from the global cacheManager.
+        // Transferring the buffer would make it unusable for other editor instances or subsequent reads.
+        // Standard cloning via postMessage is safer for shared cache data.
+        panel.webview.postMessage(msg);
       } catch (err) {
         Logger.log(`Error loading file data: ${err}`);
         panel.webview.postMessage({

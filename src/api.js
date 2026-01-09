@@ -56,11 +56,11 @@ class PdfFileDataProvider {
       if (this.data instanceof Uint8Array) {
         return this.data;
       }
-      return new Uint8Array(this.data as any);
+      return new Uint8Array(this.data);
     }
     if (this.type === DataTypeEnum.BASE64STRING) {
       // Node.js env in VS Code provides Buffer
-      const buffer = Buffer.from(this.data as string, 'base64');
+      const buffer = Buffer.from(this.data, 'base64');
       return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
     }
     throw new TypeError("Unknown data type " + this.type);
