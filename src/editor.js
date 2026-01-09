@@ -68,7 +68,7 @@ export default class PDFEdit {
 
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${panel.webview.cspSource} blob: data:; script-src ${panel.webview.cspSource} 'unsafe-eval'; style-src ${panel.webview.cspSource} 'unsafe-inline'; worker-src ${panel.webview.cspSource} blob:; connect-src ${panel.webview.cspSource} blob:; font-src ${panel.webview.cspSource};">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${panel.webview.cspSource} blob: data:; script-src ${panel.webview.cspSource} 'unsafe-eval' 'wasm-unsafe-eval'; style-src ${panel.webview.cspSource} 'unsafe-inline'; worker-src ${panel.webview.cspSource} blob: 'unsafe-eval' 'wasm-unsafe-eval'; connect-src ${panel.webview.cspSource} blob:; font-src ${panel.webview.cspSource};">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script type="module" src="${panel.webview.asWebviewUri(vscode.Uri.joinPath(extUri, "media", "editor.js"))}"></script>
   <link rel="stylesheet" href="${panel.webview.asWebviewUri(vscode.Uri.joinPath(extUri, "media", "editor.css"))}">
