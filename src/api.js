@@ -79,7 +79,7 @@ export default class PdfViewerApi {
    * @param {PdfFileDataProvider} provider A holder for the file data.
    */
   static previewPdfFile(provider) {
-    const panel = vscode.window.createWebviewPanel("pdfViewer.apiCreatedPreview", provider.name);
+    const panel = vscode.window.createWebviewPanel("modernPdfViewer.apiCreatedPreview", provider.name);
     PDFEdit.previewPdfFile(provider, panel);
   }
 }

@@ -1,8 +1,8 @@
 {
-  "name": "pdf-viewer",
-  "displayName": "PDF Viewer",
-  "description": "An extension which allows for viewing PDF files directly in VS Code (web-compatible!).",
-  "publisher": "adamraichu",
+  "name": "modern-pdf-pro",
+  "displayName": "Modern PDF Pro (WASM)",
+  "description": "A high-performance PDF viewer for VS Code powered by WebAssembly. Feature-rich, secure, and fast.",
+  "publisher": "chocolatedesue",
   "icon": "pdf-flat.png",
   "author": {
     "name": "AdamRaichu"
@@ -13,7 +13,7 @@
     "Programming Languages"
   ],
   "repository": {
-    "url": "https://github.com/AdamRaichu/vscode-pdf-viewer"
+    "url": "https://github.com/chocolatedesue/vscode-pdf"
   },
   "version": "1.2.0",
   "browser": "/dist/main.js",
@@ -25,8 +25,8 @@
   "contributes": {
     "customEditors": [
       {
-        "viewType": "pdfViewer.PDFEdit",
-        "displayName": "PDF Viewer",
+        "viewType": "modernPdfViewer.PDFEdit",
+        "displayName": "Modern PDF Pro",
         "selector": [
           {
             "filenamePattern": "*.pdf"

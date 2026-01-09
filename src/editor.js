@@ -41,7 +41,7 @@ export default class PDFEdit {
     return vscode.window.registerCustomEditorProvider(PDFEdit.viewType, provider);
   }
 
-  static viewType = "pdfViewer.PDFEdit";
+  static viewType = "modernPdfViewer.PDFEdit";
 
   constructor() { }
 
@@ -59,7 +59,7 @@ export default class PDFEdit {
    * @param {vscode.WebviewPanel} panel The webview panel object to use.
    */
   static previewPdfFile(dataProvider, panel) {
-    const extUri = vscode.extensions.getExtension("adamraichu.pdf-viewer").extensionUri;
+    const extUri = vscode.extensions.getExtension("chocolatedesue.modern-pdf-pro").extensionUri;
     panel.webview.options = {
       enableScripts: true,
     };
