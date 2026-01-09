@@ -17,8 +17,18 @@
     "url": "https://github.com/chocolatedesue/vscode-pdf"
   },
   "version": "1.2.0",
-  "browser": "/dist/main.js",
-  "main": "/dist/main.js",
+  "browser": "./dist/main.js",
+  "main": "./dist/main.js",
+  "extensionKind": [
+    "ui",
+    "workspace"
+  ],
+  "capabilities": {
+    "virtualWorkspaces": true,
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
   "engines": {
     "vscode": "^1.75.0"
   },
