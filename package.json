@@ -16,7 +16,7 @@
   "repository": {
     "url": "https://github.com/chocolatedesue/vscode-pdf"
   },
-  "version": "1.5.1",
+  "version": "1.5.2",
   "browser": "./dist/extension.browser.js",
   "main": "./dist/extension.node.js",
   "extensionKind": [
@@ -69,7 +69,7 @@
         },
         "modernPdfViewer.defaultSpreadMode": {
           "type": "string",
-          "default": "none",
+          "default": "odd",
           "enum": [
             "none",
             "odd",
@@ -113,6 +113,7 @@
   ],
   "scripts": {
     "build": "webpack",
+    "package": "sh scripts/package.sh",
     "deploy": "sh scripts/publish.sh",
     "test-web": "vscode-test-web --extensionDevelopmentPath=. .",
     "test-web-headless": "vscode-test-web --extensionDevelopmentPath=. --headless ."

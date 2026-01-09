@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
  
+## [1.5.2] - 2026-01-09
+
+### Fixed
+- **Remote Compatibility**: Fixed `localResourceRoots` authorization to support VS Code Remote (SSH/Remote Containers).
+- **URI Strategy**: Optimized `asWebviewUri` usage for reliable PDF loading in distributed environments.
+
+### Added
+- **Default Layout**: Updated default spread mode to double-page (odd) for better reading experience.
+- **Packaging Script**: Added local `npm run package` command for easier VSIX generation.
+
 ## [1.5.0] - 2026-01-09
 
 ### Refactored

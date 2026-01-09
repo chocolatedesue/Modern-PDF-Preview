@@ -263,10 +263,13 @@ export default class PDFEdit {
     const isWeb = vscode.env.uiKind === vscode.UIKind.Web;
     let localResourceRoots = [mediaUri];
 
-    if (!isWeb && uri && uri.scheme !== 'pdf-api') {
+    if (uri && uri.scheme !== 'pdf-api') {
       try {
-        const path = require('path');
-        const pdfDir = vscode.Uri.file(path.dirname(uri.fsPath));
+        // Correctly handle both local and remote URIs by getting the parent directory URI
+        // while preserving the original scheme and authority.
+        // For file:///path/to/doc.pdf -> file:///path/to
+        // For vscode-remote://ssh/path/to/doc.pdf -> vscode-remote://ssh/path/to
+        const pdfDir = uri.with({ path: uri.path.substring(0, uri.path.lastIndexOf('/')) });
         localResourceRoots.push(pdfDir);
       } catch (e) {
         Logger.log(`[Warning] Could not resolve PDF directory for localResourceRoots: ${e}`);
@@ -436,8 +439,8 @@ export default class PDFEdit {
     // which is captured in the closure of the message handler
     const msg = { ...initMsg };
 
-    if (dataProvider.uri && !isWeb) {
-      Logger.log("Strategy: URI Mode (Standard)");
+    if (dataProvider.uri) {
+      Logger.log(`Strategy: URI Mode (Standard)`);
       msg.pdfUri = panel.webview.asWebviewUri(dataProvider.uri).toString(true);
       panel.webview.postMessage(msg);
     } else {
