@@ -340,6 +340,8 @@ export default class PDFEdit {
               });
             }
           }
+        } else if (message.command === 'close') {
+          vscode.commands.executeCommand('workbench.action.closeActiveEditor');
         } else if (message.command === 'save-response') {
           // Handle save response
           const editorEntry = activeEditors.get(uriString);

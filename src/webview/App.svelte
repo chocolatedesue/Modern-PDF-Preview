@@ -26,8 +26,23 @@
     }
   }
 
+  function handleKeyDown(e: KeyboardEvent) {
+    const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+    const isCloseKey =
+      (isMac && e.metaKey && e.key === "w") ||
+      (!isMac && e.ctrlKey && e.key === "w");
+
+    if (isCloseKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      vscodeService.postMessage({ command: "close" });
+    }
+  }
+
   onMount(() => {
     console.log("[Webview] App mounted");
+
+    window.addEventListener("keydown", handleKeyDown, true);
 
     const observer = new MutationObserver(() => pdfState.updateTheme());
     observer.observe(document.body, {
@@ -45,6 +60,7 @@
     }
 
     return () => {
+      window.removeEventListener("keydown", handleKeyDown, true);
       observer.disconnect();
       window.removeEventListener("message", handleMessage);
       if (pdfState.activeBlobUrl) {
