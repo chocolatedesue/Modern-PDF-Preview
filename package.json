@@ -16,7 +16,7 @@
   "repository": {
     "url": "https://github.com/chocolatedesue/vscode-pdf"
   },
-  "version": "1.5.0",
+  "version": "1.5.1",
   "browser": "./dist/extension.browser.js",
   "main": "./dist/extension.node.js",
   "extensionKind": [
