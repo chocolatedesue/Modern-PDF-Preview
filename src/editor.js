@@ -138,40 +138,6 @@ export default class PDFEdit {
     }
   }
 
-  /**
-   * Force save the current active document.
-   * @param {vscode.ExtensionContext} context
-   */
-  static async forceSave(context) {
-    // Find the active panel's URI
-    let activeEntry = null;
-    for (const [uri, entry] of activeEditors.entries()) {
-      if (entry.panel.active) {
-        activeEntry = { uri: vscode.Uri.parse(uri), ...entry };
-        break;
-      }
-    }
-
-    if (!activeEntry) {
-      Logger.log('[Force Save] No active PDF editor found');
-      return;
-    }
-
-    Logger.log(`[Force Save] Triggering save for ${activeEntry.uri.toString()}`);
-
-    const tokenSource = new vscode.CancellationTokenSource();
-    const provider = new PDFEdit(context);
-
-    try {
-      await provider._saveDocument(activeEntry.uri, activeEntry.panel, tokenSource.token);
-      vscode.window.showInformationMessage("PDF Saved Successfully");
-    } catch (e) {
-      vscode.window.showErrorMessage(`Failed to save PDF: ${e.message}`);
-    } finally {
-      tokenSource.dispose();
-    }
-  }
-
   static viewType = VIEW_TYPE;
 
 

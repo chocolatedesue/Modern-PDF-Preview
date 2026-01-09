@@ -24,11 +24,12 @@ It is built on top of **[PDFium WASM](https://github.com/bblanchon/pdfium-binari
 ### 🚀 High Performance
 Powered by **WebAssembly (WASM)**, this extension renders large PDFs instantly without slowing down VS Code. Smooth scrolling and zooming come standard.
 
-### 🖊️ Annotation Support
+### 🖊️ Annotation & Saving
 Review and mark up documents directly.
 - **Highlight** important text.
 - **Draw** ink signatures or diagrams.
 - **Add Notes** and comments.
+- **Direct Save**: Press `Ctrl+S` (Windows/Linux) or `Cmd+S` (macOS) to directly overwrite the PDF file with your modifications.
 
 ### 🌐 Universal Support
 Works everywhere you use VS Code.
