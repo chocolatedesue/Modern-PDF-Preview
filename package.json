@@ -90,6 +90,27 @@
       }
     }
   },
+  "commands": [
+    {
+      "command": "modernPdfViewer.forceSave",
+      "title": "Save PDF",
+      "category": "PDF Preview"
+    }
+  ],
+  "keybindings": [
+    {
+      "command": "modernPdfViewer.forceSave",
+      "key": "ctrl+s",
+      "mac": "cmd+s",
+      "when": "activeCustomEditorId == 'modernPdfViewer.PDFEdit'"
+    },
+    {
+      "command": "workbench.action.closeActiveEditor",
+      "key": "ctrl+w",
+      "mac": "cmd+w",
+      "when": "activeCustomEditorId == 'modernPdfViewer.PDFEdit'"
+    }
+  ],
   "scripts": {
     "build": "webpack",
     "deploy": "sh scripts/publish.sh",

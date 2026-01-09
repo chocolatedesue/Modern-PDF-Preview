@@ -6,6 +6,12 @@ exports.activate = function (context) {
   const providerDisposable = PDFEdit.register(context);
   context.subscriptions.push(providerDisposable);
 
+  // Register command to force save
+  const commandDisposable = require('vscode').commands.registerCommand("modernPdfViewer.forceSave", () => {
+    PDFEdit.forceSave(context);
+  });
+  context.subscriptions.push(commandDisposable);
+
   return {
     getV1Api: function () {
       return PdfViewerApi;

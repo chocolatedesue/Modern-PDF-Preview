@@ -9,6 +9,13 @@ const vscode = require("vscode");
 const cacheManager = new PDFCacheManager(5); // Max 5 PDFs cached
 
 /**
+ * Collection of active editors and their state
+ * @type {Map<string, { panel: vscode.WebviewPanel, resolveSave: Function }>}
+ */
+const activeEditors = new Map();
+
+
+/**
  * @implements {import("..").PdfFileDataProvider}
  */
 class PDFDoc {
@@ -39,6 +46,22 @@ class PDFDoc {
       return cached;
     }
 
+    // Check file size limit for Web environment (100MB)
+    if (vscode.env.uiKind === vscode.UIKind.Web) {
+      try {
+        const stat = await vscode.workspace.fs.stat(this.uri);
+        const MAX_SIZE_MB = 100;
+        if (stat.size > MAX_SIZE_MB * 1024 * 1024) {
+          throw new Error(`File is too large (${(stat.size / 1024 / 1024).toFixed(1)}MB) for the Web version (Max ${MAX_SIZE_MB}MB). Please use VS Code Desktop.`);
+        }
+      } catch (e) {
+        // Ignore stat errors, fallback to try reading
+        if (e.message && e.message.includes('File is too large')) {
+          throw e;
+        }
+      }
+    }
+
     try {
       const startTime = Date.now();
       const fileData = await vscode.workspace.fs.readFile(this.uri);
@@ -57,6 +80,9 @@ class PDFDoc {
   }
 }
 
+/**
+ * @implements {vscode.CustomEditorProvider}
+ */
 export default class PDFEdit {
   /**
    * Registers the custom editor provider.
@@ -73,13 +99,242 @@ export default class PDFEdit {
     });
   }
 
+  /**
+   * Force save the current active document.
+   * @param {vscode.ExtensionContext} context
+   */
+  static async forceSave(context) {
+    // Find the active panel's URI
+    // Since we don't have a direct map from active panel to URI easily exposed without iteration,
+    // we iterate through activeEditors.
+
+    let activeEntry = null;
+    for (const [uri, entry] of activeEditors.entries()) {
+      if (entry.panel.active) {
+        activeEntry = { uri: vscode.Uri.parse(uri), ...entry };
+        break;
+      }
+    }
+
+    if (!activeEntry) {
+      Logger.log('[Force Save] No active PDF editor found');
+      return;
+    }
+
+    Logger.log(`[Force Save] Triggering save for ${activeEntry.uri.toString()}`);
+
+    // Reuse the save logic
+    // We create a dummy cancellation token source since this is a command
+    const tokenSource = new vscode.CancellationTokenSource();
+    const provider = new PDFEdit(context); // Instance just for calling methods, though methods could be static or associated with entry
+
+    try {
+      await provider._saveDocument(activeEntry.uri, activeEntry.panel, tokenSource.token);
+      vscode.window.showInformationMessage("PDF Saved Successfully");
+    } catch (e) {
+      vscode.window.showErrorMessage(`Failed to save PDF: ${e.message}`);
+    } finally {
+      tokenSource.dispose();
+    }
+  }
+
+  /**
+   * Force save the current active document.
+   * @param {vscode.ExtensionContext} context
+   */
+  static async forceSave(context) {
+    // Find the active panel's URI
+    let activeEntry = null;
+    for (const [uri, entry] of activeEditors.entries()) {
+      if (entry.panel.active) {
+        activeEntry = { uri: vscode.Uri.parse(uri), ...entry };
+        break;
+      }
+    }
+
+    if (!activeEntry) {
+      Logger.log('[Force Save] No active PDF editor found');
+      return;
+    }
+
+    Logger.log(`[Force Save] Triggering save for ${activeEntry.uri.toString()}`);
+
+    const tokenSource = new vscode.CancellationTokenSource();
+    const provider = new PDFEdit(context);
+
+    try {
+      await provider._saveDocument(activeEntry.uri, activeEntry.panel, tokenSource.token);
+      vscode.window.showInformationMessage("PDF Saved Successfully");
+    } catch (e) {
+      vscode.window.showErrorMessage(`Failed to save PDF: ${e.message}`);
+    } finally {
+      tokenSource.dispose();
+    }
+  }
+
   static viewType = VIEW_TYPE;
+
 
   /**
    * @param {vscode.ExtensionContext} context
    */
   constructor(context) {
     this.context = context;
+    this._onDidChangeCustomDocument = new vscode.EventEmitter();
+    this.onDidChangeCustomDocument = this._onDidChangeCustomDocument.event;
+  }
+
+  /**
+   * Save the custom document.
+   * @param {vscode.CustomDocument} document
+   * @param {vscode.CancellationToken} cancellation
+   * @returns {Promise<void>}
+   */
+  async saveCustomDocument(document, cancellation) {
+    const uriString = document.uri.toString();
+    const editorEntry = activeEditors.get(uriString);
+
+    if (!editorEntry || !editorEntry.panel) {
+      Logger.log(`[Error] No active panel found for ${uriString}`);
+      return;
+    }
+
+    Logger.log(`[Save] Initiating save for ${uriString}`);
+
+    // Create a promise that resolves when the webview returns the data
+    return new Promise((resolve, reject) => {
+      // Set the resolver to be called when 'save-response' is received
+      editorEntry.resolveSave = async (data) => {
+        try {
+          if (!data) {
+            Logger.log(`[Save] No data received from webview`);
+            resolve();
+            return;
+          }
+
+          Logger.log(`[Save] Writing ${data.byteLength} bytes to ${document.uri.fsPath}`);
+          await vscode.workspace.fs.writeFile(document.uri, data);
+          Logger.log(`[Save] File saved successfully`);
+          resolve();
+        } catch (e) {
+          Logger.log(`[Save] Error writing file: ${e}`);
+          reject(e);
+        } finally {
+          editorEntry.resolveSave = null;
+        }
+      };
+
+      // Send save command
+      editorEntry.panel.webview.postMessage({ command: 'save' });
+
+      // Handle cancellation/timeout
+      const timeout = setTimeout(() => {
+        if (editorEntry.resolveSave) {
+          Logger.log(`[Save] Timeout waiting for webview response`);
+          editorEntry.resolveSave = null;
+          reject(new Error("Save timed out"));
+        }
+      }, 10000); // 10s timeout
+
+      cancellation.onCancellationRequested(() => {
+        clearTimeout(timeout);
+        editorEntry.resolveSave = null;
+        reject(new Error("Save cancelled"));
+      });
+    });
+  }
+
+  /**
+   * Internal helper to save document
+   * @param {vscode.Uri} uri 
+   * @param {vscode.WebviewPanel} panel 
+   * @param {vscode.CancellationToken} cancellation 
+   */
+  async _saveDocument(uri, panel, cancellation) {
+    const uriString = uri.toString();
+    const editorEntry = activeEditors.get(uriString);
+
+    Logger.log(`[Save] Initiating save for ${uriString}`);
+
+    // Create a promise that resolves when the webview returns the data
+    return new Promise((resolve, reject) => {
+      // Set the resolver to be called when 'save-response' is received
+      editorEntry.resolveSave = async (data) => {
+        try {
+          if (!data) {
+            Logger.log(`[Save] No data received from webview`);
+            resolve();
+            return;
+          }
+
+          Logger.log(`[Save] Writing ${data.byteLength} bytes to ${uri.fsPath}`);
+          await vscode.workspace.fs.writeFile(uri, data);
+
+          // Update cache
+          if (cacheManager) {
+            cacheManager.set(uri, data, data.byteLength);
+          }
+
+          Logger.log(`[Save] File saved successfully`);
+          resolve();
+        } catch (e) {
+          Logger.log(`[Save] Error writing file: ${e}`);
+          reject(e);
+        } finally {
+          editorEntry.resolveSave = null;
+        }
+      };
+
+      // Send save command
+      panel.webview.postMessage({ command: 'save' });
+
+      // Handle cancellation/timeout
+      const timeout = setTimeout(() => {
+        if (editorEntry.resolveSave) {
+          Logger.log(`[Save] Timeout waiting for webview response`);
+          editorEntry.resolveSave = null;
+          reject(new Error("Save timed out"));
+        }
+      }, 10000); // 10s timeout
+
+      cancellation.onCancellationRequested(() => {
+        clearTimeout(timeout);
+        editorEntry.resolveSave = null;
+        reject(new Error("Save cancelled"));
+      });
+    });
+  }
+
+  /**
+   * Revert the custom document.
+   * @param {vscode.CustomDocument} document
+   * @param {vscode.CancellationToken} cancellation
+   * @returns {Promise<void>}
+   */
+  async revertCustomDocument(document, cancellation) {
+    // Reload logic would go here
+    // For now, we might just reload the webview content
+    const uriString = document.uri.toString();
+    const editorEntry = activeEditors.get(uriString);
+    if (editorEntry) {
+      // Send reload command or re-init?
+      // For this task, we focus on save. Revert is required by interface.
+      return;
+    }
+  }
+
+  /**
+   * Backup the custom document.
+   * @param {vscode.CustomDocument} document
+   * @param {vscode.CancellationToken} cancellation
+   * @returns {Promise<vscode.CustomDocumentBackup>}
+   */
+  async backupCustomDocument(document, context, cancellation) {
+    // Implementation for hot exit / backup
+    return {
+      id: document.uri.toString(),
+      delete: () => { }
+    };
   }
 
   /**
@@ -90,6 +345,12 @@ export default class PDFEdit {
    */
   async resolveCustomEditor(document, panel, _token) {
     Logger.log(`Resolving Custom Editor for: ${document.uri.toString()}`);
+
+    // Register editor instance
+    activeEditors.set(document.uri.toString(), {
+      panel,
+      resolveSave: null
+    });
 
     // Check if webview is already set up (to prevent reinitialization on tab switch)
     if (panel.webview.html && panel.webview.html.length > 0) {
@@ -173,12 +434,53 @@ export default class PDFEdit {
           Logger.log(`[Webview] ${message.message}`);
         } else if (message.command === 'error') {
           Logger.log(`[Webview Error] ${message.error}`);
+        } else if (message.command === 'dirty') {
+          // Mark document as dirty
+          Logger.log(`[Webview] Document marked dirty`);
+          this._onDidChangeCustomDocument.fire({
+            document,
+            undo: () => { }, // We don't support undo/redo yet
+            redo: () => { }
+          });
+        } else if (message.command === 'save-direct') {
+          // Unsolicited save from webview (e.g. Ctrl+S)
+          const rawData = message.data;
+          if (rawData) {
+            Logger.log(`[Direct Save] Writing ${rawData.length} bytes to ${document.uri.fsPath}`);
+            // Write file directly
+            try {
+              const buffer = new Uint8Array(rawData);
+              await vscode.workspace.fs.writeFile(document.uri, buffer);
+
+              // Update cache
+              if (cacheManager) {
+                cacheManager.set(document.uri, buffer, buffer.byteLength);
+              }
+
+              Logger.log('[Direct Save] File overwritten successfully');
+            } catch (e) {
+              Logger.log(`[Direct Save] Failed to write file: ${e}`);
+            }
+          }
+        } else if (message.command === 'save-response') {
+          // Handle save response
+          const editorEntry = activeEditors.get(dataProvider.uri.toString());
+          if (editorEntry && editorEntry.resolveSave) {
+            const rawData = message.data;
+            if (rawData) {
+              // Convert standard Array back to Uint8Array
+              editorEntry.resolveSave(new Uint8Array(rawData));
+            } else {
+              editorEntry.resolveSave(null);
+            }
+          }
         }
       });
 
       // Cleanup when panel is disposed
       panel.onDidDispose(() => {
         messageDisposable.dispose();
+        activeEditors.delete(dataProvider.uri.toString());
         Logger.log(`Webview panel disposed for ${dataProvider.uri.toString()}`);
       });
 

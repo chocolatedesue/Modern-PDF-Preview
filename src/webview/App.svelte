@@ -45,13 +45,28 @@
     }
   }
 
+  let registry = $state<PluginRegistry | null>(null);
+
   const handleInit = (c: EmbedPdfContainer) => {
     console.log("[Webview] PDF Viewer Initialized");
     container = c;
   };
 
-  const handleReady = (registry: PluginRegistry) => {
+  const handleReady = (r: PluginRegistry) => {
     console.log("[Webview] PDF Viewer Ready with Registry");
+    registry = r;
+
+    // Experimental: Try to listen to annotations if possible or expose a global helper
+    // Since we don't have exact events, we might assume any interaction that triggers
+    // export capabilities implies potential changes.
+    // For now, we will add a listener to the window to detect likely interactions
+    // or provide a mechanism for the user to signal it.
+    (window as any).markDirty = () => {
+      if (vscode) {
+        console.log("[Webview] Sending dirty signal");
+        vscode.postMessage({ command: "dirty" });
+      }
+    };
   };
 
   $effect(() => {
@@ -129,6 +144,49 @@
           });
         }
         break;
+      case "save":
+        console.log("[Webview] Received save command");
+        if (registry) {
+          try {
+            const exportPlugin = registry.getPlugin("export")?.provides();
+            if (exportPlugin) {
+              console.log("[Webview] Exporting PDF...");
+              // Use saveAsCopy().toPromise() as per documentation
+              const arrayBuffer = await exportPlugin.saveAsCopy().toPromise();
+
+              if (vscode) {
+                console.log(
+                  `[Webview] Sending ${arrayBuffer.byteLength} bytes back to host`,
+                );
+                // Send as standard Array to avoid JSON serialization issues with TypedArrays
+                vscode.postMessage({
+                  command: "save-response",
+                  data: Array.from(new Uint8Array(arrayBuffer)),
+                  requestId: message.requestId,
+                });
+              }
+            } else {
+              console.error("[Webview] Export plugin not found");
+              if (vscode)
+                vscode.postMessage({
+                  command: "error",
+                  error: "Export plugin not available",
+                  requestId: message.requestId,
+                });
+            }
+          } catch (e) {
+            console.error("[Webview] Save failed:", e);
+            if (vscode)
+              vscode.postMessage({
+                command: "error",
+                error: e.message,
+                requestId: message.requestId,
+              });
+          }
+        } else {
+          console.error("[Webview] Registry not ready");
+        }
+        break;
       case "error":
         console.error("[Webview] Error message from extension:", message.error);
         error = message.error;
@@ -178,6 +236,7 @@
       }
     }
 
+    // Intercept Ctrl+S / Cmd+S
     return () => {
       observer.disconnect();
       window.removeEventListener("message", handleMessage);
