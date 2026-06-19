@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.10] - 2026-06-19
+
+- Fixed PDF documents staying stuck on `Loading document...` in macOS VS Code webviews by defaulting the EmbedPDF worker engine off for the VS Code desktop runtime.
+- Added `modernPdfViewer.worker` so the worker engine can be re-enabled when retesting newer VS Code or EmbedPDF runtimes.
+- Allowed VS Code resource CDN URLs in the webview CSP so PDF/WASM/font resources can be fetched through `asWebviewUri`.
+- Updated EmbedPDF and packaging/build dependencies.
+
 ## [1.5.8] - 2026-03-29
 
 - Added SDK preview options for per-preview config and initial view state.

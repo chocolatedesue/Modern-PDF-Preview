@@ -25,6 +25,7 @@ export function getPdfConfiguration() {
     const spreadMode = config.get('defaultSpreadMode', 'none');
 
     const tabBar = config.get('tabBar', 'never');
+    const worker = config.get('worker', false);
 
     // Handle percentage strings (e.g., "100%")
     if (typeof zoomLevel === 'string' && zoomLevel.endsWith('%')) {
@@ -42,5 +43,6 @@ export function getPdfConfiguration() {
         scrollStrategy: 'vertical',
         rotation: 0,
         tabBar: tabBar,
+        worker: worker,
     };
 }

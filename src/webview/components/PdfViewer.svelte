@@ -26,6 +26,7 @@
     onready={viewerRuntime.handleReady}
     config={{
       src: pdfState.pdfSrc,
+      worker: pdfState.messageConfig?.worker ?? false,
       wasmUrl: pdfState.wasmUrl,
       theme: { preference: pdfState.themePreference },
       tabBar: pdfState.messageConfig?.tabBar,

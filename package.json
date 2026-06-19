@@ -16,7 +16,7 @@
   "repository": {
     "url": "https://github.com/chocolatedesue/vscode-pdf"
   },
-  "version": "1.5.9",
+  "version": "1.5.10",
   "browser": "./dist/extension.browser.js",
   "main": "./dist/extension.node.js",
   "extensionKind": [
@@ -86,6 +86,11 @@
             "never"
           ],
           "description": "Control the visibility of the internal tab bar."
+        },
+        "modernPdfViewer.worker": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run PDF processing in a Web Worker. This is faster for large files, but may stall in VS Code desktop webviews on macOS."
         }
       }
     }
@@ -119,22 +124,22 @@
     "test-web-headless": "vscode-test-web --extensionDevelopmentPath=. --headless ."
   },
   "devDependencies": {
-    "@actions/core": "^3.0.0",
-    "@embedpdf/svelte-pdf-viewer": "^2.13.0",
-    "@types/vscode": "^1.75.0",
+    "@actions/core": "^3.0.1",
+    "@embedpdf/svelte-pdf-viewer": "^2.14.4",
+    "@types/vscode": "1.75.0",
     "@vscode/test-web": "^0.0.80",
-    "@vscode/vsce": "^3.7.1",
+    "@vscode/vsce": "^3.9.2",
     "css-loader": "^7.1.4",
-    "ovsx": "^0.10.10",
+    "ovsx": "^1.0.1",
     "style-loader": "^4.0.0",
-    "svelte": "^5.55.0",
+    "svelte": "^5.56.3",
     "svelte-loader": "^3.2.4",
-    "webpack": "^5.105.4",
-    "webpack-cli": "^7.0.2"
+    "webpack": "^5.107.2",
+    "webpack-cli": "^7.0.3"
   },
   "dependencies": {
-    "@embedpdf/core": "^2.13.0",
-    "@embedpdf/plugin-document-manager": "^2.13.0",
-    "@embedpdf/plugin-render": "^2.13.0"
+    "@embedpdf/core": "^2.14.4",
+    "@embedpdf/plugin-document-manager": "^2.14.4",
+    "@embedpdf/plugin-render": "^2.14.4"
   }
 }
