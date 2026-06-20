@@ -14,10 +14,10 @@
 
     switch (message.command) {
       case "preview":
-        pdfState.setPreview(message);
+        await pdfState.setPreview(message);
         break;
       case "reload":
-        pdfState.setPreview(message, { forceReload: true });
+        await pdfState.setPreview(message, { forceReload: true });
         break;
       case "save":
         await pdfState.handleSave(message);
@@ -70,6 +70,7 @@
       if (pdfState.activeBlobUrl) {
         URL.revokeObjectURL(pdfState.activeBlobUrl);
       }
+      pdfState.releaseWasmBlobUrl();
     };
   });
 </script>

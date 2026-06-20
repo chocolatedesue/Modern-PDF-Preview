@@ -2,8 +2,8 @@
 
 ## [1.5.10] - 2026-06-19
 
-- Fixed PDF documents staying stuck on `Loading document...` in macOS VS Code webviews by defaulting the EmbedPDF worker engine off for the VS Code desktop runtime.
-- Added `modernPdfViewer.worker` so the worker engine can be re-enabled when retesting newer VS Code or EmbedPDF runtimes.
+- Fixed PDF documents staying stuck on `Loading document...` in VS Code desktop webviews by passing a blob-backed WASM URL to the EmbedPDF worker.
+- Defaulted `modernPdfViewer.worker` to `true` so PDF processing runs off the webview UI thread, with fallback to the direct engine if worker preparation fails.
 - Allowed VS Code resource CDN URLs in the webview CSP so PDF/WASM/font resources can be fetched through `asWebviewUri`.
 - Updated EmbedPDF and packaging/build dependencies.
 

@@ -100,6 +100,8 @@ export const pdfState = $state({
   themePreference: getInitialTheme(),
   messageConfig: null,
   activeBlobUrl: null,
+  activeWasmBlobUrl: null,
+  wasmSourceUri: null,
   viewerKey: 0,
   currentDocumentUri: null,
   currentDocumentKey: null,
@@ -151,18 +153,83 @@ export const pdfState = $state({
     }
   },
 
-  setPreview(message, options = {}) {
+  releaseWasmBlobUrl() {
+    if (this.activeWasmBlobUrl) {
+      URL.revokeObjectURL(this.activeWasmBlobUrl);
+      this.activeWasmBlobUrl = null;
+      this.wasmSourceUri = null;
+    }
+  },
+
+  async resolveWasmUrl(message) {
+    if (!message.config?.worker || !message.wasmUri) {
+      this.releaseWasmBlobUrl();
+      return {
+        wasmUrl: message.wasmUri,
+        worker: !!message.config?.worker,
+      };
+    }
+
+    if (this.activeWasmBlobUrl && this.wasmSourceUri === message.wasmUri) {
+      return {
+        wasmUrl: this.activeWasmBlobUrl,
+        worker: true,
+      };
+    }
+
+    try {
+      const response = await fetch(message.wasmUri);
+      if (!response.ok) {
+        throw new Error(`WASM fetch failed with HTTP ${response.status}`);
+      }
+
+      const buffer = await response.arrayBuffer();
+      const magic = new Uint8Array(buffer, 0, Math.min(4, buffer.byteLength));
+      if (magic[0] !== 0x00 || magic[1] !== 0x61 || magic[2] !== 0x73 || magic[3] !== 0x6d) {
+        throw new Error("WASM response did not contain a valid module header");
+      }
+
+      this.releaseWasmBlobUrl();
+      this.activeWasmBlobUrl = URL.createObjectURL(
+        new Blob([buffer], { type: "application/wasm" })
+      );
+      this.wasmSourceUri = message.wasmUri;
+
+      return {
+        wasmUrl: this.activeWasmBlobUrl,
+        worker: true,
+      };
+    } catch (error) {
+      console.warn(
+        "[Webview] Worker WASM blob bypass failed; falling back to direct engine:",
+        error
+      );
+      this.releaseWasmBlobUrl();
+      return {
+        wasmUrl: message.wasmUri,
+        worker: false,
+      };
+    }
+  },
+
+  async setPreview(message, options = {}) {
     const { forceReload = false } = options;
     const newDocUri = message.pdfUri || "base64-data";
     const newDocKey = message.documentKey || newDocUri;
     const docChanged = this.currentDocumentKey !== newDocKey;
     const srcChanged = this.currentDocumentUri !== newDocUri;
 
+    this.loading = true;
     this.currentDocumentKey = newDocKey;
     this.currentDocumentUri = newDocUri;
-    this.wasmUrl = message.wasmUri;
-    this.messageConfig = message.config;
     this.error = null;
+
+    const resolvedWasm = await this.resolveWasmUrl(message);
+    this.wasmUrl = resolvedWasm.wasmUrl;
+    this.messageConfig = {
+      ...(message.config || {}),
+      worker: resolvedWasm.worker,
+    };
 
     const restoredViewState = message.viewState ?? vscodeService.getState()?.viewState ?? null;
     this.syncViewState(restoredViewState, { notifyExtension: false });

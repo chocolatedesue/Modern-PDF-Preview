@@ -1,7 +1,7 @@
 {
   "name": "modern-pdf-preview",
-  "displayName": "Modern PDF Preview (WASM)",
-  "description": "A high-performance PDF previewer for VS Code powered by WebAssembly. Feature-rich, secure, and fast.",
+  "displayName": "%extension.displayName%",
+  "description": "%extension.description%",
   "publisher": "chocolatedesue",
   "icon": "icon.png",
   "author": {
@@ -36,7 +36,7 @@
     "customEditors": [
       {
         "viewType": "modernPdfViewer.PDFEdit",
-        "displayName": "Modern PDF Preview",
+        "displayName": "%customEditor.displayName%",
         "selector": [
           {
             "filenamePattern": "*.pdf"
@@ -46,7 +46,7 @@
       }
     ],
     "configuration": {
-      "title": "Modern PDF Preview",
+      "title": "%configuration.title%",
       "properties": {
         "modernPdfViewer.defaultZoomLevel": {
           "type": "string",
@@ -65,7 +65,7 @@
             "300%",
             "400%"
           ],
-          "description": "The initial zoom level when opening a PDF file."
+          "description": "%configuration.defaultZoomLevel.description%"
         },
         "modernPdfViewer.defaultSpreadMode": {
           "type": "string",
@@ -75,7 +75,7 @@
             "odd",
             "even"
           ],
-          "description": "The initial spread mode when opening a PDF file."
+          "description": "%configuration.defaultSpreadMode.description%"
         },
         "modernPdfViewer.tabBar": {
           "type": "string",
@@ -85,36 +85,40 @@
             "multiple",
             "never"
           ],
-          "description": "Control the visibility of the internal tab bar."
+          "description": "%configuration.tabBar.description%"
         },
         "modernPdfViewer.worker": {
           "type": "boolean",
-          "default": false,
-          "description": "Run PDF processing in a Web Worker. This is faster for large files, but may stall in VS Code desktop webviews on macOS."
+          "default": true,
+          "description": "%configuration.worker.description%"
         }
       }
-    }
-  },
-  "commands": [
-    {
-      "command": "modernPdfViewer.forceSave",
-      "title": "Save PDF",
-      "category": "PDF Preview"
-    }
-  ],
-  "keybindings": [
-    {
-      "command": "modernPdfViewer.forceSave",
-      "key": "ctrl+s",
-      "mac": "cmd+s",
-      "when": "activeCustomEditorId == 'modernPdfViewer.PDFEdit'"
     },
-    {
-      "command": "workbench.action.closeActiveEditor",
-      "key": "ctrl+w",
-      "mac": "cmd+w",
-      "when": "activeCustomEditorId == 'modernPdfViewer.PDFEdit'"
-    }
+    "commands": [
+      {
+        "command": "modernPdfViewer.forceSave",
+        "title": "%command.forceSave.title%",
+        "category": "%command.category%"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "modernPdfViewer.forceSave",
+        "key": "ctrl+s",
+        "mac": "cmd+s",
+        "when": "activeCustomEditorId == 'modernPdfViewer.PDFEdit'"
+      },
+      {
+        "command": "workbench.action.closeActiveEditor",
+        "key": "ctrl+w",
+        "mac": "cmd+w",
+        "when": "activeCustomEditorId == 'modernPdfViewer.PDFEdit'"
+      }
+    ]
+  },
+  "activationEvents": [
+    "onCustomEditor:modernPdfViewer.PDFEdit",
+    "onCommand:modernPdfViewer.forceSave"
   ],
   "scripts": {
     "build": "webpack",

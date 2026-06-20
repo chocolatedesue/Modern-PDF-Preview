@@ -1,1 +1,12 @@
-{}
+{
+  "extension.displayName": "Modern PDF Preview (WASM)",
+  "extension.description": "A high-performance PDF previewer for VS Code powered by WebAssembly. Feature-rich, secure, and fast.",
+  "customEditor.displayName": "Modern PDF Preview",
+  "configuration.title": "Modern PDF Preview",
+  "configuration.defaultZoomLevel.description": "The initial zoom level when opening a PDF file.",
+  "configuration.defaultSpreadMode.description": "The initial spread mode when opening a PDF file.",
+  "configuration.tabBar.description": "Control the visibility of the internal tab bar.",
+  "configuration.worker.description": "Run PDF processing in a Web Worker. VS Code desktop webviews use a blob-backed WASM URL bypass for this path and fall back to the direct engine if it fails.",
+  "command.forceSave.title": "Save PDF",
+  "command.category": "PDF Preview"
+}

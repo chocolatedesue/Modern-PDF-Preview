@@ -658,7 +658,6 @@ export default class PDFEdit {
       this.viewStateManager.getPersisted(documentKey) ||
       activeEditors.get(uriString)?.lastViewState ||
       null;
-
     const msg = {
       command,
       documentKey,
