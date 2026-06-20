@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.5.10] - 2026-06-19
+## [1.5.11] - 2026-06-20
 
 - Fixed PDF documents staying stuck on `Loading document...` in VS Code desktop webviews by passing a blob-backed WASM URL to the EmbedPDF worker.
 - Defaulted `modernPdfViewer.worker` to `true` so PDF processing runs off the webview UI thread, with fallback to the direct engine if worker preparation fails.
