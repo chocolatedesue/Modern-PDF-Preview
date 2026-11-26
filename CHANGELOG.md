@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.2] - 2026-11-26
+
+### Changed
+- Restored `modernPdfViewer.defaultSpreadMode` default to `"odd"` (two-page spread) alongside `modernPdfViewer.defaultZoomLevel` default `"page-width"` (Fit Width), with clearer Settings descriptions and concise `README.md` / `ARCHITECTURE.md` docs.
+
+### Fixed
+- Passed `zoom` (`ZoomSpec`, e.g. `{ mode: "fit-width" }`) directly into EmbedPDF 3.4.0 `plugins.stage` config so initial Fit Width and custom zoom defaults apply reliably on first open instead of starting in `automatic` mode.
+
 ## [2.0.1] - 2026-11-26
 
 ### Changed

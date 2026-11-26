@@ -3,7 +3,7 @@
 The extension has two parts:
 
 - Extension host: VS Code integration, file I/O, save flow, view-state persistence
-- Webview: PDF UI built with Svelte and `@embedpdf/*`
+- Webview: Pure ES2022 Webview hosting `@embedpdf/viewer` (`<embedpdf-viewer>` Web Component) and `@embedpdf/engine`
 
 ## Runtime Layout
 
@@ -12,12 +12,12 @@ The extension has two parts:
 - `src/managers/`: editor tracking, config, view-state persistence
 - `src/services/`: shared services such as logging
 - `src/api/`: public API for other extensions
-- `src/webview/`: Svelte app, viewer runtime, state, components
+- `src/webview/`: Pure JS entrypoint, viewer runtime, state store, and VS Code bridge
 
 ## Rendering
 
 - Engine: `pdfium.wasm`
-- Viewer stack: `@embedpdf/svelte-pdf-viewer`
+- Viewer stack: `@embedpdf/viewer@3.4.0` + `@embedpdf/engine@3.4.0`
 - Target environments: desktop VS Code and VS Code Web
 
 ## Document Loading

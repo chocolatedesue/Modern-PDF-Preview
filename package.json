@@ -17,7 +17,7 @@
     "type": "git",
     "url": "https://github.com/chocolatedesue/Modern-PDF-Preview.git"
   },
-  "version": "2.0.1",
+  "version": "2.0.2",
   "browser": "./dist/extension.browser.js",
   "main": "./dist/extension.node.js",
   "extensionKind": [
@@ -70,13 +70,18 @@
         },
         "modernPdfViewer.defaultSpreadMode": {
           "type": "string",
-          "default": "none",
+          "default": "odd",
           "enum": [
             "none",
             "odd",
             "even"
           ],
-          "description": "%configuration.defaultSpreadMode.description%"
+          "description": "%configuration.defaultSpreadMode.description%",
+          "enumDescriptions": [
+            "Single-page continuous scroll.",
+            "Two-page spread with odd pages on the left (default).",
+            "Two-page spread with even pages on the left (book cover layout)."
+          ]
         },
         "modernPdfViewer.tabBar": {
           "type": "string",

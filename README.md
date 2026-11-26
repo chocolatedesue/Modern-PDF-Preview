@@ -10,31 +10,26 @@
 
 </div>
 
-Fast PDF preview for VS Code, built on `EmbedPDF 3.x` (`@embedpdf/viewer-svelte`) and `PDFium WASM`.
+Fast PDF preview for VS Code powered by `@embedpdf/viewer` (Web Component) and `PDFium WASM` — zero framework overhead, Desktop & Web dual runtime.
 
 ## Features
 
-- Fast PDF rendering with PDFium WebAssembly (Web Worker with automatic main-thread fallback)
-- Annotations & interactive form filling with native VS Code dirty tracking, Undo/Redo, and `Ctrl+S` / `Cmd+S` save back to disk
-- Desktop (`node`) and Web (`vscode.dev` / `github.dev`) dual runtime support
-- Native VS Code theme token synchronization and status bar indicator (page, zoom, open PDF count)
-- Persistent view state (page, scroll anchor, zoom, spread, rotation) across reloads
-- Collision-free Public API for other VS Code extensions
+- **PDFium WASM rendering**: Runs in a Web Worker (with automatic main-thread fallback) and streams local/remote files via zero-copy `asWebviewUri`.
+- **Two-page spread & Fit Width by default**: Opens in `odd` two-page spread + `page-width` (Fit Width), customizable in VS Code Settings.
+- **Annotations & form filling**: Native VS Code dirty tracking, Undo/Redo, and `Ctrl+S` / `Cmd+S` save back to disk.
+- **VS Code integration**: Theme token sync, status bar (`Page X / Y · Z%` + open tab count), and persistent view state across reloads.
+- **Desktop & Web**: Works on local Desktop, Remote-SSH / WSL / `code-server`, and `vscode.dev` / `github.dev`, plus a collision-free extension API.
 
 ## Settings
 
-- `modernPdfViewer.defaultZoomLevel`
-- `modernPdfViewer.defaultSpreadMode`
-- `modernPdfViewer.tabBar`
-- `modernPdfViewer.worker`
-- `modernPdfViewer.enableForms`
-- `modernPdfViewer.showStatusBar`
-
-## Notes
-
-- Hidden PDF tabs keep their webview context to preserve state.
-- Memory usage grows with the number of open PDFs; the status bar shows the open PDF count when multiple tabs are open.
-- Close unused PDF tabs if you work with large files.
+| Setting | Default | Options / Description |
+| --- | --- | --- |
+| `modernPdfViewer.defaultSpreadMode` | `"odd"` | `"odd"` (two-page), `"even"` (cover two-page), `"none"` (single-page) |
+| `modernPdfViewer.defaultZoomLevel` | `"page-width"` | `"page-width"` (Fit Width), `"page-fit"`, `"page-height"`, `"auto"`, `"50%"`–`"400%"` |
+| `modernPdfViewer.worker` | `true` | Render PDFs in a Web Worker (auto-fallback to main thread) |
+| `modernPdfViewer.enableForms` | `true` | Enable interactive PDF form filling |
+| `modernPdfViewer.showStatusBar` | `true` | Show page, zoom, and open PDF tab count in the status bar |
+| `modernPdfViewer.tabBar` | `"never"` | `"never"`, `"multiple"`, `"always"` internal viewer tab bar |
 
 ## Install
 
@@ -43,17 +38,11 @@ Fast PDF preview for VS Code, built on `EmbedPDF 3.x` (`@embedpdf/viewer-svelte`
 
 ## Docs
 
-- [API](docs/API.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Development](docs/DEVELOPMENT.md)
-- [Reference Repository](docs/REFERENCE.md)
-- [Troubleshooting](docs/TROUBLESHOOTING.md)
+- [API](docs/API.md) · [Architecture](docs/ARCHITECTURE.md) · [Development](docs/DEVELOPMENT.md) · [Troubleshooting](docs/TROUBLESHOOTING.md)
 
 ## Credits
 
-- [embed-pdf-viewer](https://github.com/embedpdf/embed-pdf-viewer)
-- [PDFium WASM](https://github.com/bblanchon/pdfium-binaries)
-- [mathematic-inc/vscode-pdf](https://github.com/mathematic-inc/vscode-pdf) as reference only
+- [embed-pdf-viewer](https://github.com/embedpdf/embed-pdf-viewer) · [PDFium WASM](https://github.com/bblanchon/pdfium-binaries) · [mathematic-inc/vscode-pdf](https://github.com/mathematic-inc/vscode-pdf) (reference)
 
 License: MIT
 

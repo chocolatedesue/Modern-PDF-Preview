@@ -21,7 +21,7 @@ export function getPdfConfiguration() {
   };
 
   let zoomLevel = config.get("defaultZoomLevel", "page-width");
-  const spreadMode = config.get("defaultSpreadMode", "none");
+  const spreadMode = config.get("defaultSpreadMode", "odd");
   const tabBar = config.get("tabBar", "never");
   const worker = config.get("worker", true);
   const enableForms = config.get("enableForms", true);
@@ -38,7 +38,7 @@ export function getPdfConfiguration() {
 
   return {
     zoomLevel,
-    spreadMode: spreadMap[spreadMode] || "none",
+    spreadMode: spreadMap[spreadMode] || "odd",
     rotation: 0,
     tabBar,
     worker,

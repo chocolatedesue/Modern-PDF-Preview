@@ -63,10 +63,24 @@ export function buildFeaturesConfig(config) {
   };
 }
 
+export function buildZoomSpec(zoomLevel) {
+  if (typeof zoomLevel === "number" && Number.isFinite(zoomLevel) && zoomLevel > 0) {
+    return { level: zoomLevel };
+  }
+  if (zoomLevel === "fit-width" || zoomLevel === "fit-page" || zoomLevel === "automatic") {
+    return { mode: zoomLevel };
+  }
+  return null;
+}
+
 export function buildStagePluginConfig(config) {
   const stage = {};
   if (config?.spreadMode) {
     stage.spread = config.spreadMode;
+  }
+  const zoomSpec = buildZoomSpec(config?.zoomLevel);
+  if (zoomSpec) {
+    stage.zoom = zoomSpec;
   }
   if (typeof config?.rotation === "number" && config.rotation !== 0) {
     stage.viewRotation = config.rotation;
