@@ -1,0 +1,157 @@
+{
+  "name": "modern-pdf-preview",
+  "displayName": "%extension.displayName%",
+  "description": "%extension.description%",
+  "publisher": "chocolatedesue",
+  "icon": "icon.png",
+  "author": {
+    "name": "chocolatedesue"
+  },
+  "homepage": "https://github.com/chocolatedesue/Modern-PDF-Preview",
+  "license": "MIT",
+  "categories": [
+    "Visualization",
+    "Programming Languages"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chocolatedesue/Modern-PDF-Preview.git"
+  },
+  "version": "2.0.0",
+  "browser": "./dist/extension.browser.js",
+  "main": "./dist/extension.node.js",
+  "extensionKind": [
+    "ui",
+    "workspace"
+  ],
+  "capabilities": {
+    "virtualWorkspaces": true,
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "modernPdfViewer.PDFEdit",
+        "displayName": "%customEditor.displayName%",
+        "selector": [
+          {
+            "filenamePattern": "*.pdf"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
+    "configuration": {
+      "title": "%configuration.title%",
+      "properties": {
+        "modernPdfViewer.defaultZoomLevel": {
+          "type": "string",
+          "default": "page-width",
+          "enum": [
+            "page-width",
+            "page-fit",
+            "page-height",
+            "auto",
+            "50%",
+            "75%",
+            "100%",
+            "125%",
+            "150%",
+            "200%",
+            "300%",
+            "400%"
+          ],
+          "description": "%configuration.defaultZoomLevel.description%"
+        },
+        "modernPdfViewer.defaultSpreadMode": {
+          "type": "string",
+          "default": "odd",
+          "enum": [
+            "none",
+            "odd",
+            "even"
+          ],
+          "description": "%configuration.defaultSpreadMode.description%"
+        },
+        "modernPdfViewer.tabBar": {
+          "type": "string",
+          "default": "never",
+          "enum": [
+            "always",
+            "multiple",
+            "never"
+          ],
+          "description": "%configuration.tabBar.description%"
+        },
+        "modernPdfViewer.worker": {
+          "type": "boolean",
+          "default": true,
+          "description": "%configuration.worker.description%"
+        },
+        "modernPdfViewer.enableForms": {
+          "type": "boolean",
+          "default": true,
+          "description": "%configuration.enableForms.description%"
+        },
+        "modernPdfViewer.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "%configuration.showStatusBar.description%"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "modernPdfViewer.forceSave",
+        "title": "%command.forceSave.title%",
+        "category": "%command.category%"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "modernPdfViewer.forceSave",
+        "key": "ctrl+s",
+        "mac": "cmd+s",
+        "when": "activeCustomEditorId == 'modernPdfViewer.PDFEdit'"
+      },
+      {
+        "command": "workbench.action.closeActiveEditor",
+        "key": "ctrl+w",
+        "mac": "cmd+w",
+        "when": "activeCustomEditorId == 'modernPdfViewer.PDFEdit'"
+      }
+    ]
+  },
+  "activationEvents": [
+    "onCustomEditor:modernPdfViewer.PDFEdit",
+    "onCommand:modernPdfViewer.forceSave"
+  ],
+  "scripts": {
+    "build": "webpack",
+    "package": "sh scripts/package.sh",
+    "deploy": "sh scripts/publish.sh",
+    "test-web": "vscode-test-web --extensionDevelopmentPath=. .",
+    "test-web-headless": "vscode-test-web --extensionDevelopmentPath=. --headless ."
+  },
+  "devDependencies": {
+    "@actions/core": "^3.0.1",
+    "@types/vscode": "1.75.0",
+    "@vscode/test-web": "^0.0.80",
+    "@vscode/vsce": "^3.9.2",
+    "ovsx": "^1.4.0",
+    "webpack": "^5.113.0",
+    "webpack-cli": "^7.3.1"
+  },
+  "dependencies": {
+    "@embedpdf/viewer": "^3.4.0",
+    "@embedpdf/engine": "^3.4.0"
+  },
+  "bugs": {
+    "url": "https://github.com/chocolatedesue/Modern-PDF-Preview/issues"
+  }
+}

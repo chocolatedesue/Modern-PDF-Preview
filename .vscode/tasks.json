@@ -1,0 +1,13 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"command": "bun run build",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "bun: build",
+			"detail": "webpack"
+		}
+	]
+}

@@ -1,0 +1,14 @@
+{
+  "extension.displayName": "Modern PDF Preview (WASM)",
+  "extension.description": "A high-performance PDF previewer for VS Code powered by EmbedPDF 3.x and PDFium WebAssembly. Fast, interactive, and works on Desktop & Web.",
+  "customEditor.displayName": "Modern PDF Preview",
+  "configuration.title": "Modern PDF Preview",
+  "configuration.defaultZoomLevel.description": "The initial zoom level when opening a PDF file.",
+  "configuration.defaultSpreadMode.description": "The initial spread mode when opening a PDF file.",
+  "configuration.tabBar.description": "Control the visibility of the internal viewer tab bar.",
+  "configuration.worker.description": "Run PDF rendering in a Web Worker using a blob-backed bypass in VS Code webviews, falling back to the main thread if unavailable.",
+  "configuration.enableForms.description": "Allow filling interactive PDF form fields inside the preview.",
+  "configuration.showStatusBar.description": "Show current PDF page, zoom level, and open PDF tab count in the VS Code status bar.",
+  "command.forceSave.title": "Save PDF",
+  "command.category": "PDF Preview"
+}

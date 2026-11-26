@@ -1,0 +1,3 @@
+[submodule "references/vscode-pdf"]
+	path = references/vscode-pdf
+	url = https://github.com/mathematic-inc/vscode-pdf.git
