@@ -20,6 +20,29 @@ let nextApiPanelId = 1;
 /**
  * @implements {vscode.CustomEditorProvider}
  */
+function encodeBinaryToBase64(data) {
+  if (typeof data === "string") {
+    return data;
+  }
+  const bytes =
+    data instanceof Uint8Array
+      ? data
+      : ArrayBuffer.isView(data)
+        ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
+        : data instanceof ArrayBuffer
+          ? new Uint8Array(data)
+          : new Uint8Array(data);
+  if (typeof Buffer !== "undefined") {
+    return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength).toString("base64");
+  }
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
 export default class PDFEdit {
   /**
    * Registers the custom editor provider.
@@ -497,10 +520,13 @@ export default class PDFEdit {
 
     const localResourceRoots = [mediaUri];
 
-    if (documentUri && documentUri.scheme !== "pdf-api") {
+    const candidateUris = [documentUri, dataProvider instanceof PDFDoc ? dataProvider.sourceUri : null].filter(
+      (u, idx, arr) => u && u.scheme !== "pdf-api" && arr.findIndex((x) => x?.toString() === u.toString()) === idx
+    );
+    for (const u of candidateUris) {
       try {
-        const pdfDir = documentUri.with({
-          path: documentUri.path.substring(0, documentUri.path.lastIndexOf("/")),
+        const pdfDir = u.with({
+          path: u.path.substring(0, u.path.lastIndexOf("/")),
         });
         localResourceRoots.push(pdfDir);
       } catch (e) {
@@ -685,9 +711,19 @@ export default class PDFEdit {
 
     Logger.log(`[View State] Sending ${command} payload to webview`);
 
-    if (dataProvider.uri) {
+    const isPureWebHost = typeof process === "undefined" || !process.versions?.node;
+    const sourceUri = dataProvider instanceof PDFDoc ? dataProvider.sourceUri : dataProvider?.uri;
+    const hasInMemoryData = dataProvider instanceof PDFDoc && dataProvider.hasInMemoryData();
+    const isDirectUriScheme = sourceUri?.scheme === "file" || sourceUri?.scheme === "vscode-remote";
+    const canUseDirectWebviewUri =
+      Boolean(sourceUri) &&
+      !isPureWebHost &&
+      isDirectUriScheme &&
+      !hasInMemoryData;
+
+    if (canUseDirectWebviewUri) {
       Logger.log(`Strategy: URI Mode (${command})`);
-      msg.pdfUri = panel.webview.asWebviewUri(dataProvider.uri).toString(true);
+      msg.pdfUri = panel.webview.asWebviewUri(sourceUri).toString(true);
       panel.webview.postMessage(msg);
       return;
     }
@@ -704,7 +740,7 @@ export default class PDFEdit {
         data = await dataProvider.getFileData();
       }
 
-      msg.data = data;
+      msg.data = encodeBinaryToBase64(data);
       panel.webview.postMessage(msg);
     } catch (err) {
       Logger.log(`Error loading file data: ${err}`);

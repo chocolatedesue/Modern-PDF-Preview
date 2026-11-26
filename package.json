@@ -17,7 +17,7 @@
     "type": "git",
     "url": "https://github.com/chocolatedesue/Modern-PDF-Preview.git"
   },
-  "version": "2.0.0",
+  "version": "2.0.1",
   "browser": "./dist/extension.browser.js",
   "main": "./dist/extension.node.js",
   "extensionKind": [
@@ -70,7 +70,7 @@
         },
         "modernPdfViewer.defaultSpreadMode": {
           "type": "string",
-          "default": "odd",
+          "default": "none",
           "enum": [
             "none",
             "odd",

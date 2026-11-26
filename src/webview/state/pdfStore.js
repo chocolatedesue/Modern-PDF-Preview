@@ -1,4 +1,4 @@
-import { base64ToArrayBuffer } from "../utils/binary.js";
+import { base64ToUint8Array } from "../utils/binary.js";
 import { vscodeService } from "../services/vscode.js";
 
 function areViewStatesEqual(left, right) {
@@ -199,14 +199,22 @@ export function createPdfStore() {
       }
       if (message.data) {
         let buffer;
-        if (message.data instanceof Uint8Array) {
+        if (typeof message.data === "string") {
+          buffer = base64ToUint8Array(message.data);
+        } else if (message.data instanceof Uint8Array) {
           buffer = message.data;
+        } else if (ArrayBuffer.isView(message.data)) {
+          buffer = new Uint8Array(message.data.buffer, message.data.byteOffset, message.data.byteLength);
         } else if (message.data instanceof ArrayBuffer) {
           buffer = new Uint8Array(message.data);
         } else if (Array.isArray(message.data)) {
           buffer = new Uint8Array(message.data);
+        } else if (message.data.type === "Buffer" && Array.isArray(message.data.data)) {
+          buffer = new Uint8Array(message.data.data);
+        } else if (typeof message.data === "object") {
+          buffer = new Uint8Array(Object.values(message.data));
         } else {
-          buffer = new Uint8Array(base64ToArrayBuffer(message.data));
+          throw new Error("Unsupported PDF data payload type");
         }
         this.releasePdfBlobUrl();
         const blobUrl = URL.createObjectURL(new Blob([buffer], { type: "application/pdf" }));

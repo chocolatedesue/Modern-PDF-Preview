@@ -1,13 +1,22 @@
 # Changelog
 
+## [2.0.1] - 2026-11-26
+
+### Changed
+- Changed `modernPdfViewer.defaultSpreadMode` default from `"odd"` (two-page spread) to `"none"` (single-page continuous) so PDFs remain sharp and unclipped in narrow VS Code editor panes (two-page spread remains selectable in settings and the toolbar).
+
+### Fixed
+- Fixed VS Code Web (`vscode.dev`), virtual workspaces, remote non-`file` URIs, and Hot Exit backup/untitled restores bypassing `PDFDoc.getFileData()` (ensuring `vscode.workspace.fs.readFile` and the 100 MB Web safety limit actually run).
+- Kept Node-backed `file://` and `vscode-remote://` hosts (Desktop, Remote-SSH, WSL, `code-server`, and on-disk Hot Exit backups) on zero-copy `asWebviewUri` streaming; hardened Data Injection Mode (pure `vscode.dev` WebWorker, virtual FS, `untitled:`, and SDK in-memory previews) to encode binary payloads cleanly for VS Code's JSON `postMessage` bridge and decode via native `Uint8Array.fromBase64()` when available.
+
 ## [2.0.0] - 2026-11-26
 
 ### Changed
-- Migrated viewer core from `@embedpdf/svelte-pdf-viewer@2.14.4` to `@embedpdf/viewer-svelte@3.4.0` (`@embedpdf/viewer@3.4.0`, `@embedpdf/engine@3.4.0`, `@embedpdf/viewer-chrome@3.4.0`), gaining 3.1 large-document page loading optimizations and 3.4 scrollbar/form focus fixes.
+- Removed Svelte and migrated the webview to the pure `@embedpdf/viewer@3.4.0` (`<embedpdf-viewer>` Web Component) and `@embedpdf/engine@3.4.0` runtime, gaining 3.1 large-document page loading optimizations and 3.4 scrollbar/form focus fixes.
 - Replaced private `export.saveAsCopy().toPromise()` save path with official 3.4.0 `viewer.documents.download()`, ensuring pending annotation and form edits flush cleanly before writing to disk.
 - Replaced manual 2.x scroll/zoom/rotation persistence glue with native 3.4.0 `StageCapability.getViewState()` / `applyViewState()` (with backwards-compatible fallback for legacy 2.x saved page numbers).
 - Switched toolbar gating from ineffective `disabledCategories` to 3.4.0 fine-grained `features` (preview-first defaults: annotations & form filling on; form building, measurement, redaction, snapshots, print/open/download chrome off).
-- Updated toolchain dependencies (`svelte@5.59.2`, `webpack@5.113.0`, `webpack-cli@7.3.1`, `@vscode/vsce@4.1.1`, `ovsx@1.4.0`) while keeping `@types/vscode@1.75.0` aligned with `engines.vscode`.
+- Updated toolchain dependencies (`webpack@5.113.0`, `webpack-cli@7.3.1`, `@vscode/vsce@^3.9.2`, `ovsx@^1.4.0`) while keeping `@types/vscode@1.75.0` aligned with `engines.vscode`.
 
 ### Added
 - Native VS Code dirty state & Undo/Redo integration (`CustomDocumentEditEvent` wired to EmbedPDF 3.4.0 `HistoryCapability` and `documents.onUnsavedChangesChanged`).

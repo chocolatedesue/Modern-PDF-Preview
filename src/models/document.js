@@ -94,6 +94,18 @@ export class PDFDoc {
     this._ignoreChangesUntil = Date.now() + durationMs;
   }
 
+  get sourceUri() {
+    return this._backupUri || this._uri;
+  }
+
+  hasInMemoryData() {
+    return Boolean(this._initialData);
+  }
+
+  hasTransientSource() {
+    return Boolean(this._backupUri || this._initialData);
+  }
+
   clearTransientSource() {
     this._backupUri = null;
     this._initialData = null;
